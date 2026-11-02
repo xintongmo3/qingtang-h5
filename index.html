@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>上下求索 · 青塘遗址</title>
+<style>
+  /* ========== 地基：尺寸体系 / 全局变量（美化时改这里，不碰结构） ========== */
+  :root{
+    --color-tubrown:#8B6F47;   /* 土棕 */
+    --color-rock:#6E6256;      /* 岩灰 */
+    --color-paper:#EFE4CC;     /* 米白 */
+    --color-zhusha:#B23A2E;    /* 朱砂红 */
+    --color-ink:#3A2E22;       /* 墨褐 */
+    --cta-grad: linear-gradient(180deg,#9c7a4e,#6b4e2e);
+    --ratio: 9 / 16;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;background:#1a1510;overflow:hidden;
+    font-family:"STKaiti","KaiTi","Songti SC","Microsoft YaHei",serif;}
+  #app{height:100dvh;display:flex;align-items:center;justify-content:center;}
+  /* 竖屏舞台：等比 9:16，始终完整落在视口内 */
+  #stage{position:relative;aspect-ratio:var(--ratio);
+    width:min(100vw,56.25dvh);height:auto;max-height:100dvh;
+    background:#000;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.6);}
+
+  /* ========== 页面容器：状态驱动显隐 ========== */
+  .page{position:absolute;inset:0;background-size:cover;background-position:center;
+    opacity:0;visibility:hidden;transition:opacity .45s ease;z-index:1;}
+  .page.active{opacity:1;visibility:visible;z-index:2;}
+  .page video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+
+  /* ========== 顶部 6 格进度条（全局常驻） ========== */
+  #progress{position:absolute;top:2.2%;left:50%;transform:translateX(-50%);
+    display:flex;gap:2.2%;width:70%;z-index:30;pointer-events:none;opacity:0;transition:opacity .4s;}
+  #progress.show{opacity:1;}
+  #progress .cell{flex:1;height:7px;border-radius:4px;background:rgba(58,46,34,.35);
+    border:1px solid rgba(239,228,204,.55);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:all .5s;}
+  #progress .cell.lit{background:linear-gradient(180deg,#d8a84e,#B23A2E);
+    border-color:#f0d9a0;box-shadow:0 0 8px rgba(216,168,78,.9);}
+
+  /* ========== 热区（透明可点，带轻微呼吸提示） ========== */
+  .hotspot{position:absolute;z-index:20;cursor:pointer;border-radius:16px;}
+  .hotspot.hint::after{content:"";position:absolute;inset:0;border-radius:16px;
+    border:2px solid rgba(216,168,78,.0);animation:breathe 1.8s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{border-color:rgba(216,168,78,.0);box-shadow:0 0 0 rgba(216,168,78,0);}
+    50%{border-color:rgba(216,168,78,.75);box-shadow:0 0 16px rgba(216,168,78,.5);}}
+
+  /* ========== 国风 CTA 按钮（图上没画按钮的页面用） ========== */
+  .cta{position:absolute;left:50%;transform:translateX(-50%);z-index:25;
+    padding:2.6% 9%;border-radius:40px;background:var(--cta-grad);
+    color:#f3e7c9;font-size:clamp(16px,4.6vmin,26px);letter-spacing:.15em;font-weight:700;
+    border:1.5px solid #d8b878;box-shadow:0 4px 14px rgba(0,0,0,.45),inset 0 1px 2px rgba(255,255,255,.3);
+    cursor:pointer;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transition:opacity .4s,transform .15s;}
+  .cta.show{opacity:1;pointer-events:auto;animation:ctaIn .5s ease;}
+  .cta:active{transform:translateX(-50%) scale(.95);}
+  @keyframes ctaIn{from{opacity:0;transform:translate(-50%,10px);}to{opacity:1;transform:translateX(-50%);}}
+
+  /* ========== 刮除画布 ========== */
+  .scratch{position:absolute;inset:0;z-index:10;touch-action:none;transition:opacity .6s;}
+
+  /* ========== 成功 / 提示浮层 ========== */
+  .toast{position:absolute;left:50%;top:14%;transform:translateX(-50%);z-index:40;
+    padding:2.5% 6%;background:rgba(58,46,34,.9);color:#f3e7c9;border:1.5px solid #d8b878;
+    border-radius:14px;font-size:clamp(14px,4vmin,22px);letter-spacing:.08em;white-space:nowrap;
+    box-shadow:0 6px 20px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .4s,top .4s;}
+  .toast.show{opacity:1;top:11%;}
+
+  .hintword{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);z-index:15;
+    color:#fff;font-size:clamp(13px,3.6vmin,20px);letter-spacing:.1em;text-shadow:0 2px 6px rgba(0,0,0,.8);
+    background:rgba(0,0,0,.25);padding:1.4% 4%;border-radius:30px;pointer-events:none;
+    animation:floatUp 2s ease-in-out infinite;}
+  @keyframes floatUp{0%,100%{transform:translate(-50%,0);}50%{transform:translate(-50%,-8px);}}
+
+  /* 翻页过渡（宣纸） */
+  #flip{position:absolute;inset:0;z-index:50;background:#efe4cc;opacity:0;pointer-events:none;
+    transition:opacity .25s;}
+  #flip.on{opacity:1;}
+
+  .fadebtn{opacity:0;animation:none;}
+
+  /* 跳过按钮 */
+  .skip{position:absolute;right:4%;top:3.2%;z-index:25;padding:1.2% 4.2%;border-radius:30px;
+    background:rgba(58,46,34,.55);color:#f3e7c9;font-size:clamp(12px,3.2vmin,18px);
+    letter-spacing:.12em;border:1px solid rgba(216,184,120,.6);cursor:pointer;}
+  .skip:active{transform:scale(.95);}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <!-- 顶部进度条 -->
+    <div id="progress">
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div>
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    </div>
+
+    <!-- P1 封面 -->
+    <section class="page" id="s-cover" style="background-image:url('assets/p01.jpg')">
+      <div class="hotspot hint" data-go="role1" style="left:27%;top:80%;width:46%;height:6%"></div>
+    </section>
+
+    <!-- P2 田野考古员身份 -->
+    <section class="page" id="s-role1" style="background-image:url('assets/p02.jpg')">
+      <div class="hotspot hint" data-go="intro" style="left:22%;top:92%;width:56%;height:5.5%"></div>
+    </section>
+
+    <!-- P3 剧情引导（视频，播完自动进入山洞页） -->
+    <section class="page" id="s-intro">
+      <video id="introVideo" src="assets/p03.mp4" muted playsinline preload="auto"></video>
+      <div class="skip" id="btn-skip">跳过 ▸</div>
+    </section>
+
+    <!-- P3.5 山洞 · 进入探方 -->
+    <section class="page" id="s-cave" style="background-image:url('assets/p03b.jpg')">
+      <div class="hotspot hint" data-go="map" style="left:24%;top:80%;width:52%;height:6%"></div>
+    </section>
+
+    <!-- P4 / P14 遗址总览（状态切换背景） -->
+    <section class="page" id="s-map" style="background-image:url('assets/p04.jpg')">
+      <!-- 点位热区由 JS 按 POINTS 动态注入 -->
+    </section>
+
+    <!-- P5 / P6 文物挖掘（刮土） -->
+    <section class="page" id="s-dig">
+      <canvas class="scratch" id="digCanvas"></canvas>
+      <div class="hintword" id="digHint">滑动手铲，轻柔刮开土层</div>
+      <div class="toast" id="digToast">发现远古考古遗存！可提取修复</div>
+      <button class="cta" id="btn-dig" style="top:90%">送 往 工 作 台</button>
+    </section>
+
+    <!-- P7 文物修复师身份 -->
+    <section class="page" id="s-role2" style="background-image:url('assets/p07.jpg')">
+      <div class="hotspot hint" data-go="clean" style="left:22%;top:92%;width:56%;height:5.5%"></div>
+    </section>
+
+    <!-- P8 / P9 文物清理（刮浮土） -->
+    <section class="page" id="s-clean">
+      <canvas class="scratch" id="cleanCanvas"></canvas>
+      <div class="hintword" id="cleanHint">滑动软毛刷，清理标本表面浮土</div>
+      <div class="toast" id="cleanToast">遗存细节已完整显露</div>
+      <button class="cta" id="btn-clean" style="top:90%">生 成 考 古 档 案</button>
+    </section>
+
+    <!-- P10 考古档案知识卡 -->
+    <section class="page" id="s-archive" style="background-image:url('assets/p10.jpg')">
+      <button class="cta" id="btn-archive" style="top:91%">开 始 答 题</button>
+    </section>
+
+    <!-- P11 科普答题 -->
+    <section class="page" id="s-quiz" style="background-image:url('assets/p11.jpg')">
+      <div class="hotspot" data-ans="A" style="left:27%;top:66.5%;width:46%;height:6.2%"></div>
+      <div class="hotspot" data-ans="B" style="left:27%;top:75.5%;width:46%;height:6.2%"></div>
+      <div class="hotspot" data-ans="C" style="left:27%;top:84.5%;width:46%;height:6.2%"></div>
+    </section>
+
+    <!-- P12 回答正确 -->
+    <section class="page" id="s-correct" style="background-image:url('assets/p12.jpg')">
+      <button class="cta" id="btn-correct" style="top:92%">下 一 步</button>
+    </section>
+
+    <!-- P13 回答错误 -->
+    <section class="page" id="s-wrong" style="background-image:url('assets/p13.jpg')">
+      <button class="cta" id="btn-wrong" style="top:92%">返 回 重 答</button>
+    </section>
+
+    <!-- 翻页过渡 -->
+    <div id="flip"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   青塘遗址 H5 —— 地基层（状态机 + 数据结构 + 导航 + 刮除引擎）
+   加文物 = 往 RELICS 加一条 + 补素材 + 给 POINTS 对应点位填 relic 索引
+   ========================================================================= */
+
+/* ---------- 文物数据（当前仅第 1 组，可扩展到 6 组） ---------- */
+const RELICS = [
+  {
+    id:0, name:'陡刃砾石石器',
+    dig:   { cover:'assets/p05.jpg', base:'assets/p06.jpg',
+             target:{x0:.18,y0:.34,x1:.82,y1:.80}, threshold:.55 },
+    clean: { cover:'assets/p08.jpg', base:'assets/p09.jpg',
+             target:{x0:.12,y0:.34,x1:.76,y1:.74}, threshold:.50 },
+    archive:'assets/p10.jpg', quiz:'assets/p11.jpg',
+    correct:'assets/p12.jpg', wrong:'assets/p13.jpg',
+    answer:'B'
+  }
+  // TODO 第2~6组：溶洞中心居址区 / 早期贝类 / 植物采集 / 第5文化层 / M1墓葬
+];
+
+/* ---------- 遗址总览 6 点位（含热区坐标%，建成后填 relic 索引） ---------- */
+const POINTS = [
+  { n:1, name:'河滩石器加工区',          relic:0,    x:3,  y:30, w:30, h:13 },
+  { n:2, name:'溶洞中心居址区',          relic:null, x:27, y:46, w:26, h:12 },
+  { n:3, name:'黄门岩2号洞-早期贝类遗存区', relic:null, x:58, y:51, w:34, h:13 },
+  { n:4, name:'黄门岩2号洞-植物采集活动区', relic:null, x:2,  y:72, w:30, h:13 },
+  { n:5, name:'黄门岩1号洞第5文化层',      relic:null, x:30, y:76, w:26, h:13 },
+  { n:6, name:'黄门岩1号洞M1墓葬',        relic:null, x:58, y:80, w:34, h:13 }
+];
+
+/* ---------- 全局状态 ---------- */
+const state = {
+  page:'cover',
+  unlockedCount:0,     // 已点亮遗址数 → 进度条 & 地图状态
+  currentRelic:0       // 当前正在处理的文物索引
+};
+
+/* ---------- 页面 DOM 映射 ---------- */
+const PAGES = {
+  cover:'s-cover', role1:'s-role1', intro:'s-intro', cave:'s-cave', map:'s-map',
+  dig:'s-dig', role2:'s-role2', clean:'s-clean', archive:'s-archive',
+  quiz:'s-quiz', correct:'s-correct', wrong:'s-wrong'
+};
+const $ = id => document.getElementById(id);
+
+/* ---------- 导航（含宣纸翻页过渡） ---------- */
+let navigating=false;
+function go(page, {flip=true}={}){
+  if(navigating) return; navigating=true;
+  const doSwitch=()=>{
+    Object.values(PAGES).forEach(id=>$(id).classList.remove('active'));
+    $(PAGES[page]).classList.add('active');
+    state.page=page;
+    onEnter(page);
+    updateProgress();
+    navigating=false;
+  };
+  if(flip){
+    const f=$('flip'); f.classList.add('on');
+    setTimeout(()=>{ doSwitch(); setTimeout(()=>f.classList.remove('on'),250); },260);
+  } else doSwitch();
+}
+
+function updateProgress(){
+  const bar=$('progress');
+  // 封面/身份/剧情页不显示进度条，进入地图后常驻
+  const show=['map','dig','role2','clean','archive','quiz','correct','wrong'].includes(state.page);
+  bar.classList.toggle('show',show);
+  [...bar.children].forEach((c,i)=>c.classList.toggle('lit', i<state.unlockedCount));
+}
+
+/* ---------- 各页进入时的初始化 ---------- */
+function onEnter(page){
+  if(page==='intro'){
+    const v=$('introVideo'); v.currentTime=0;
+    v.onended=()=>{ if(state.page==='intro') go('cave'); };   // 播完自动进山洞页
+    v.play().catch(()=>{});
+  }
+  if(page!=='intro'){ const v=$('introVideo'); if(!v.paused) v.pause(); }
+  if(page==='map')    renderMap();
+  if(page==='dig')    startScratch('dig');
+  if(page==='clean')  startScratch('clean');
+  // 静态 CTA 页面：进入即显示按钮（档案→开始答题 / 正确页 / 错误页）
+  if(page==='archive') $('btn-archive').classList.add('show');
+  if(page==='correct') $('btn-correct').classList.add('show');
+  if(page==='wrong')   $('btn-wrong').classList.add('show');
+}
+
+/* ---------- 遗址总览：按状态切背景 + 注入点位热区 ---------- */
+function renderMap(){
+  const map=$('s-map');
+  map.style.backgroundImage = `url('${state.unlockedCount>=1?'assets/p14.jpg':'assets/p04.jpg'}')`;
+  map.querySelectorAll('.pt').forEach(e=>e.remove());
+  POINTS.forEach((p,idx)=>{
+    const el=document.createElement('div');
+    el.className='hotspot pt';
+    el.style.cssText=`left:${p.x}%;top:${p.y}%;width:${p.w}%;height:${p.h}%`;
+    const isNext = idx===state.unlockedCount;         // 下一个待解锁
+    const built  = p.relic!==null && RELICS[p.relic]; // 已有素材
+    if(isNext && built){
+      el.classList.add('hint');
+      el.onclick=()=>{ state.currentRelic=p.relic; go('dig'); };
+    }else{
+      el.onclick=()=>toast(idx<state.unlockedCount?'该遗址已点亮':'后续遗址敬请期待，请先完成当前区域', 's-map');
+    }
+    map.appendChild(el);
+  });
+}
+
+/* ---------- 通用提示 ---------- */
+function toast(text, pageDomId){
+  const page=$(pageDomId||PAGES[state.page]);
+  let t=page.querySelector('.toast.tmp');
+  if(!t){ t=document.createElement('div'); t.className='toast tmp'; page.appendChild(t);}
+  t.textContent=text; t.classList.add('show');
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+/* =========================================================================
+   刮除引擎（覆盖网格追踪进度，不读像素 → file:// 直接可用）
+   ========================================================================= */
+const GX=26, GY=46;
+function startScratch(kind){
+  const relic=RELICS[state.currentRelic];
+  const cfg=relic[kind];
+  const page=$(kind==='dig'?'s-dig':'s-clean');
+  const canvas=$(kind==='dig'?'digCanvas':'cleanCanvas');
+  const hint=$(kind==='dig'?'digHint':'cleanHint');
+  const toastEl=$(kind==='dig'?'digToast':'cleanToast');
+  const cta=$(kind==='dig'?'btn-dig':'btn-clean');
+
+  // 底层：显露后的图 / 盖层画布：带土的图
+  page.style.backgroundImage=`url('${cfg.base}')`;
+  canvas.style.opacity='1'; canvas.style.pointerEvents='auto';
+  cta.classList.remove('show'); toastEl.classList.remove('show'); hint.style.display='';
+
+  const ctx=canvas.getContext('2d');
+  const rect=page.getBoundingClientRect();
+  const W=canvas.width=Math.round(rect.width);
+  const H=canvas.height=Math.round(rect.height);
+  const brush=Math.max(W,H)*0.07;
+
+  // 画盖层图（object-fit:cover）
+  const img=new Image();
+  let done=false;
+  const covered=new Set();
+  // 目标区域内的网格单元总数
+  const tgt=cfg.target;
+  let targetCells=0;
+  for(let gx=0;gx<GX;gx++)for(let gy=0;gy<GY;gy++){
+    const cx=(gx+.5)/GX, cy=(gy+.5)/GY;
+    if(cx>=tgt.x0&&cx<=tgt.x1&&cy>=tgt.y0&&cy<=tgt.y1) targetCells++;
+  }
+  img.onload=()=>{
+    const s=Math.max(W/img.width,H/img.height);
+    const dw=img.width*s, dh=img.height*s;
+    ctx.drawImage(img,(W-dw)/2,(H-dh)/2,dw,dh);
+    ctx.globalCompositeOperation='destination-out';
+  };
+  img.src=cfg.cover;
+
+  let drawing=false;
+  function pos(e){
+    const r=canvas.getBoundingClientRect();
+    const p=(e.touches?e.touches[0]:e);
+    return {x:(p.clientX-r.left)*(W/r.width), y:(p.clientY-r.top)*(H/r.height)};
+  }
+  function erase(x,y){
+    ctx.beginPath(); ctx.arc(x,y,brush,0,Math.PI*2); ctx.fill();
+    // 记录覆盖网格（仅目标区域内计入进度）
+    const gx0=Math.floor((x-brush)/W*GX), gx1=Math.floor((x+brush)/W*GX);
+    const gy0=Math.floor((y-brush)/H*GY), gy1=Math.floor((y+brush)/H*GY);
+    for(let gx=gx0;gx<=gx1;gx++)for(let gy=gy0;gy<=gy1;gy++){
+      if(gx<0||gy<0||gx>=GX||gy>=GY)continue;
+      const cx=(gx+.5)/GX, cy=(gy+.5)/GY;
+      if(cx>=tgt.x0&&cx<=tgt.x1&&cy>=tgt.y0&&cy<=tgt.y1) covered.add(gx+'_'+gy);
+    }
+    if(hint.style.display!=='none'&&covered.size>2){hint.style.display='none';}
+    check();
+  }
+  function check(){
+    if(done) return;
+    if(covered.size/targetCells>=cfg.threshold){
+      done=true;
+      // 自动清空剩余，完整显露底图
+      canvas.style.pointerEvents='none';
+      canvas.style.opacity='0';
+      toastEl.classList.add('show');
+      setTimeout(()=>cta.classList.add('show'),500);
+    }
+  }
+  const down=e=>{drawing=true;const p=pos(e);erase(p.x,p.y);e.preventDefault();};
+  const move=e=>{if(!drawing)return;const p=pos(e);erase(p.x,p.y);e.preventDefault();};
+  const up=()=>{drawing=false;};
+  canvas.onpointerdown=down; canvas.onpointermove=move;
+  canvas.onpointerup=up;    canvas.onpointerleave=up;
+}
+
+/* =========================================================================
+   事件绑定
+   ========================================================================= */
+// data-go 热区（封面/身份页等）
+document.querySelectorAll('[data-go]').forEach(el=>{
+  el.addEventListener('click',()=>go(el.dataset.go));
+});
+// 视频页「跳过」→ 山洞页；山洞页「进入探方」热区由 data-go="map" 处理
+$('btn-skip').addEventListener('click',()=>go('cave'));
+// 挖掘完成 → 切换修复师身份
+$('btn-dig').addEventListener('click',()=>go('role2'));
+// 清理完成 → 考古档案
+$('btn-clean').addEventListener('click',()=>go('archive'));
+// 档案 → 答题
+$('btn-archive').addEventListener('click',()=>go('quiz'));
+// 答题判定
+document.querySelectorAll('[data-ans]').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const correct=RELICS[state.currentRelic].answer;
+    go(el.dataset.ans===correct?'correct':'wrong');
+  });
+});
+// 回答正确 → 点亮遗址 → 遗址总览（P14 态）
+$('btn-correct').addEventListener('click',()=>{
+  if(state.unlockedCount<=state.currentRelic) state.unlockedCount=state.currentRelic+1;
+  go('map');
+});
+// 回答错误 → 返回答题
+$('btn-wrong').addEventListener('click',()=>go('quiz'));
+
+/* ---------- 启动 ---------- */
+go('cover',{flip:false});
+</script>
+</body>
+</html>
