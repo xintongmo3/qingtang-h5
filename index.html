@@ -85,6 +85,13 @@
     background:rgba(58,46,34,.55);color:#f3e7c9;font-size:clamp(12px,3.2vmin,18px);
     letter-spacing:.12em;border:1px solid rgba(216,184,120,.6);cursor:pointer;}
   .skip:active{transform:scale(.95);}
+
+  /* 声音开关 */
+  #soundBtn{position:absolute;left:4%;top:2.6%;z-index:36;width:clamp(30px,8vmin,42px);height:clamp(30px,8vmin,42px);
+    display:flex;align-items:center;justify-content:center;border-radius:50%;
+    background:rgba(58,46,34,.55);border:1px solid rgba(216,184,120,.6);color:#f3e7c9;
+    font-size:clamp(15px,4vmin,22px);cursor:pointer;user-select:none;}
+  #soundBtn:active{transform:scale(.92);}
 </style>
 </head>
 <body>
@@ -95,6 +102,9 @@
       <div class="cell"></div><div class="cell"></div><div class="cell"></div>
       <div class="cell"></div><div class="cell"></div><div class="cell"></div>
     </div>
+
+    <!-- 声音开关（常驻） -->
+    <div id="soundBtn" title="声音开关">🔊</div>
 
     <!-- P1 封面 -->
     <section class="page" id="s-cover" style="background-image:url('assets/p01.jpg')">
@@ -108,7 +118,7 @@
 
     <!-- P3 剧情引导（视频，播完自动进入山洞页） -->
     <section class="page" id="s-intro">
-      <video id="introVideo" src="assets/p03.mp4" muted playsinline preload="auto"></video>
+      <video id="introVideo" src="assets/p03.mp4" playsinline preload="auto"></video>
       <div class="skip" id="btn-skip">跳过 ▸</div>
     </section>
 
@@ -175,6 +185,51 @@
    青塘遗址 H5 —— 地基层（状态机 + 数据结构 + 导航 + 刮除引擎）
    加文物 = 往 RELICS 加一条 + 补素材 + 给 POINTS 对应点位填 relic 索引
    ========================================================================= */
+
+/* ---------- 声音引擎（Web Audio 合成，零文件，离线可用） ---------- */
+let soundOn = true;
+const SFX = (()=>{
+  let ctx=null, master=null, enabled=true;
+  function init(){
+    if(ctx) return;
+    try{
+      ctx = new (window.AudioContext||window.webkitAudioContext)();
+      master = ctx.createGain(); master.gain.value=0.5; master.connect(ctx.destination);
+    }catch(e){ ctx=null; }
+  }
+  function resume(){ if(ctx && ctx.state==='suspended') ctx.resume(); }
+  function tone(freq,dur,type='sine',vol=0.3,slideTo=null){
+    if(!enabled||!ctx) return;
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq,ctx.currentTime);
+    if(slideTo) o.frequency.linearRampToValueAtTime(slideTo,ctx.currentTime+dur);
+    g.gain.setValueAtTime(vol,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0008,ctx.currentTime+dur);
+    o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime+dur);
+  }
+  function noise(dur=0.12,vol=0.14,freq=1800,q=0.8){
+    if(!enabled||!ctx) return;
+    const len=Math.floor(ctx.sampleRate*dur);
+    const buf=ctx.createBuffer(1,len,ctx.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    const n=ctx.createBufferSource(); n.buffer=buf;
+    const f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; f.Q.value=q;
+    const g=ctx.createGain(); g.gain.setValueAtTime(vol,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0008,ctx.currentTime+dur);
+    n.connect(f); f.connect(g); g.connect(master); n.start(); n.stop(ctx.currentTime+dur);
+  }
+  return {
+    init, resume,
+    setEnabled(v){ enabled=v; if(master) master.gain.value=v?0.5:0; },
+    click(){ tone(640,0.06,'triangle',0.22); },
+    scratch(){ noise(0.1,0.13,1000+Math.random()*700,0.7); },     // 手铲刮土
+    brush(){ noise(0.13,0.08,3200+Math.random()*1500,0.6); },      // 软毛刷
+    reveal(){ tone(440,0.35,'sine',0.25,760); },                   // 显露
+    correct(){ tone(660,0.12,'sine',0.3); setTimeout(()=>tone(880,0.16,'sine',0.3),110); setTimeout(()=>tone(1320,0.28,'sine',0.24),250); }, // 答对
+    wrong(){ tone(320,0.25,'sawtooth',0.22,170); },                // 答错
+    light(){ tone(523,0.14,'sine',0.3); setTimeout(()=>tone(784,0.3,'sine',0.3),130); } // 点亮
+  };
+})();
 
 /* ---------- 文物数据（当前仅第 1 组，可扩展到 6 组） ---------- */
 const RELICS = [
@@ -245,9 +300,9 @@ function updateProgress(){
 /* ---------- 各页进入时的初始化 ---------- */
 function onEnter(page){
   if(page==='intro'){
-    const v=$('introVideo'); v.currentTime=0;
+    const v=$('introVideo'); v.currentTime=0; v.muted=!soundOn;
     v.onended=()=>{ if(state.page==='intro') go('cave'); };   // 播完自动进山洞页
-    v.play().catch(()=>{});
+    v.play().catch(()=>{ v.muted=true; v.play().catch(()=>{}); });  // 带声失败则静音兜底
   }
   if(page!=='intro'){ const v=$('introVideo'); if(!v.paused) v.pause(); }
   if(page==='map')    renderMap();
@@ -272,7 +327,7 @@ function renderMap(){
     const built  = p.relic!==null && RELICS[p.relic]; // 已有素材
     if(isNext && built){
       el.classList.add('hint');
-      el.onclick=()=>{ state.currentRelic=p.relic; go('dig'); };
+      el.onclick=()=>{ SFX.click(); state.currentRelic=p.relic; go('dig'); };
     }else{
       el.onclick=()=>toast(idx<state.unlockedCount?'该遗址已点亮':'后续遗址敬请期待，请先完成当前区域', 's-map');
     }
@@ -332,7 +387,7 @@ function startScratch(kind){
   };
   img.src=cfg.cover;
 
-  let drawing=false;
+  let drawing=false, lastSnd=0;
   function pos(e){
     const r=canvas.getBoundingClientRect();
     const p=(e.touches?e.touches[0]:e);
@@ -340,6 +395,8 @@ function startScratch(kind){
   }
   function erase(x,y){
     ctx.beginPath(); ctx.arc(x,y,brush,0,Math.PI*2); ctx.fill();
+    const now=performance.now();
+    if(now-lastSnd>105){ lastSnd=now; (kind==='dig'?SFX.scratch():SFX.brush()); }  // 刮土/毛刷声
     // 记录覆盖网格（仅目标区域内计入进度）
     const gx0=Math.floor((x-brush)/W*GX), gx1=Math.floor((x+brush)/W*GX);
     const gy0=Math.floor((y-brush)/H*GY), gy1=Math.floor((y+brush)/H*GY);
@@ -355,6 +412,7 @@ function startScratch(kind){
     if(done) return;
     if(covered.size/targetCells>=cfg.threshold){
       done=true;
+      SFX.reveal();                                  // 显露音效
       // 自动清空剩余，完整显露底图
       canvas.style.pointerEvents='none';
       canvas.style.opacity='0';
@@ -372,32 +430,49 @@ function startScratch(kind){
 /* =========================================================================
    事件绑定
    ========================================================================= */
+// 首次交互解锁音频上下文（浏览器策略要求）
+function unlockAudio(){ SFX.init(); SFX.resume(); window.removeEventListener('pointerdown',unlockAudio); }
+window.addEventListener('pointerdown',unlockAudio);
+
+// 声音开关（控制音效 + 视频声音）
+const soundBtn=$('soundBtn');
+function renderSound(){ soundBtn.textContent = soundOn?'🔊':'🔇'; }
+soundBtn.addEventListener('click',e=>{
+  e.stopPropagation();
+  soundOn=!soundOn; SFX.setEnabled(soundOn);
+  const v=$('introVideo'); v.muted=!soundOn;
+  renderSound();
+});
+renderSound();
+
 // data-go 热区（封面/身份页等）
 document.querySelectorAll('[data-go]').forEach(el=>{
-  el.addEventListener('click',()=>go(el.dataset.go));
+  el.addEventListener('click',()=>{ SFX.click(); go(el.dataset.go); });
 });
 // 视频页「跳过」→ 山洞页；山洞页「进入探方」热区由 data-go="map" 处理
-$('btn-skip').addEventListener('click',()=>go('cave'));
+$('btn-skip').addEventListener('click',()=>{ SFX.click(); go('cave'); });
 // 挖掘完成 → 切换修复师身份
-$('btn-dig').addEventListener('click',()=>go('role2'));
+$('btn-dig').addEventListener('click',()=>{ SFX.click(); go('role2'); });
 // 清理完成 → 考古档案
-$('btn-clean').addEventListener('click',()=>go('archive'));
+$('btn-clean').addEventListener('click',()=>{ SFX.click(); go('archive'); });
 // 档案 → 答题
-$('btn-archive').addEventListener('click',()=>go('quiz'));
-// 答题判定
+$('btn-archive').addEventListener('click',()=>{ SFX.click(); go('quiz'); });
+// 答题判定（答对清脆音 / 答错低沉音）
 document.querySelectorAll('[data-ans]').forEach(el=>{
   el.addEventListener('click',()=>{
-    const correct=RELICS[state.currentRelic].answer;
-    go(el.dataset.ans===correct?'correct':'wrong');
+    const ok = el.dataset.ans===RELICS[state.currentRelic].answer;
+    ok?SFX.correct():SFX.wrong();
+    go(ok?'correct':'wrong');
   });
 });
 // 回答正确 → 点亮遗址 → 遗址总览（P14 态）
 $('btn-correct').addEventListener('click',()=>{
   if(state.unlockedCount<=state.currentRelic) state.unlockedCount=state.currentRelic+1;
+  SFX.light();
   go('map');
 });
 // 回答错误 → 返回答题
-$('btn-wrong').addEventListener('click',()=>go('quiz'));
+$('btn-wrong').addEventListener('click',()=>{ SFX.click(); go('quiz'); });
 
 /* ---------- 启动 ---------- */
 go('cover',{flip:false});
