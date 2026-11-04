@@ -259,6 +259,9 @@ const POINTS = [
   { n:6, name:'黄门岩1号洞M1墓葬',        relic:null, x:58, y:80, w:34, h:13 }
 ];
 
+/* ---------- 遗址总览背景（下标 = 已点亮遗址数；加文物时补对应点亮图） ---------- */
+const MAP_IMAGES = ['assets/p04.jpg','assets/p14.jpg'];  // [0]=全锁  [1]=点1亮  ...后续补 [2][3]...
+
 /* ---------- 全局状态 ---------- */
 const state = {
   page:'cover',
@@ -312,16 +315,18 @@ function onEnter(page){
   if(page==='map')    renderMap();
   if(page==='dig')    startScratch('dig');
   if(page==='clean')  startScratch('clean');
-  // 静态 CTA 页面：进入即显示按钮（档案→开始答题 / 正确页 / 错误页）
-  if(page==='archive') $('btn-archive').classList.add('show');
-  if(page==='correct') $('btn-correct').classList.add('show');
-  if(page==='wrong')   $('btn-wrong').classList.add('show');
+  // 档案/答题/正确/错误页：背景按当前文物数据切换（多文物可扩展）
+  const r=RELICS[state.currentRelic];
+  if(page==='archive'){ $('s-archive').style.backgroundImage=`url('${r.archive}')`; $('btn-archive').classList.add('show'); }
+  if(page==='quiz')     $('s-quiz').style.backgroundImage=`url('${r.quiz}')`;
+  if(page==='correct'){ $('s-correct').style.backgroundImage=`url('${r.correct}')`; $('btn-correct').classList.add('show'); }
+  if(page==='wrong'){   $('s-wrong').style.backgroundImage=`url('${r.wrong}')`; $('btn-wrong').classList.add('show'); }
 }
 
 /* ---------- 遗址总览：按状态切背景 + 注入点位热区 ---------- */
 function renderMap(){
   const map=$('s-map');
-  map.style.backgroundImage = `url('${state.unlockedCount>=1?'assets/p14.jpg':'assets/p04.jpg'}')`;
+  map.style.backgroundImage = `url('${MAP_IMAGES[Math.min(state.unlockedCount, MAP_IMAGES.length-1)]}')`;
   map.querySelectorAll('.pt').forEach(e=>e.remove());
   POINTS.forEach((p,idx)=>{
     const el=document.createElement('div');
