@@ -106,6 +106,9 @@
     <!-- 声音开关（常驻） -->
     <div id="soundBtn" title="声音开关">🔊</div>
 
+    <!-- 背景音乐（古风 BGM，循环） -->
+    <audio id="bgm" src="assets/bgm.mp3" loop preload="auto"></audio>
+
     <!-- P1 封面 -->
     <section class="page" id="s-cover" style="background-image:url('assets/p01.jpg')">
       <div class="hotspot hint" data-go="role1" style="left:27%;top:80%;width:46%;height:6%"></div>
@@ -124,7 +127,7 @@
 
     <!-- P3.5 山洞 · 进入探方 -->
     <section class="page" id="s-cave" style="background-image:url('assets/p03b.jpg')">
-      <div class="hotspot hint" data-go="map" style="left:24%;top:80%;width:52%;height:6%"></div>
+      <div class="hotspot hint" data-go="map" style="left:16%;top:82%;width:68%;height:12%"></div>
     </section>
 
     <!-- P4 / P14 遗址总览（状态切换背景） -->
@@ -305,6 +308,7 @@ function onEnter(page){
     v.play().catch(()=>{ v.muted=true; v.play().catch(()=>{}); });  // 带声失败则静音兜底
   }
   if(page!=='intro'){ const v=$('introVideo'); if(!v.paused) v.pause(); }
+  const bgm=$('bgm'); if(bgm) bgm.volume = (page==='intro') ? 0.06 : 0.32;  // 视频页压低BGM
   if(page==='map')    renderMap();
   if(page==='dig')    startScratch('dig');
   if(page==='clean')  startScratch('clean');
@@ -431,7 +435,11 @@ function startScratch(kind){
    事件绑定
    ========================================================================= */
 // 首次交互解锁音频上下文（浏览器策略要求）
-function unlockAudio(){ SFX.init(); SFX.resume(); window.removeEventListener('pointerdown',unlockAudio); }
+function unlockAudio(){
+  SFX.init(); SFX.resume();
+  const bgm=$('bgm'); bgm.volume=0.32; if(soundOn) bgm.play().catch(()=>{});  // 启动背景音乐
+  window.removeEventListener('pointerdown',unlockAudio);
+}
 window.addEventListener('pointerdown',unlockAudio);
 
 // 声音开关（控制音效 + 视频声音）
@@ -441,6 +449,7 @@ soundBtn.addEventListener('click',e=>{
   e.stopPropagation();
   soundOn=!soundOn; SFX.setEnabled(soundOn);
   const v=$('introVideo'); v.muted=!soundOn;
+  const bgm=$('bgm'); if(soundOn){ bgm.play().catch(()=>{}); } else { bgm.pause(); }
   renderSound();
 });
 renderSound();
