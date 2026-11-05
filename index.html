@@ -18,11 +18,13 @@
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;background:#1a1510;overflow:hidden;
     font-family:"STKaiti","KaiTi","Songti SC","Microsoft YaHei",serif;}
-  #app{height:100dvh;display:flex;align-items:center;justify-content:center;}
-  /* 竖屏舞台：等比 9:16，始终完整落在视口内 */
-  #stage{position:relative;aspect-ratio:var(--ratio);
-    width:min(100vw,56.25dvh);height:auto;max-height:100dvh;
-    background:#000;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.6);}
+  #app{width:100vw;height:100vh;height:100dvh;display:flex;align-items:center;justify-content:center;}
+  /* 竖屏舞台：等比 9:16，显式宽高兼容所有手机浏览器与微信 WebView */
+  #stage{position:relative;
+    width:100vw;height:177.78vw;
+    max-width:56.25vh;max-width:56.25dvh;
+    max-height:100vh;max-height:100dvh;
+    background:#1a1510;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.6);}
 
   /* ========== 页面容器：状态驱动显隐 ========== */
   .page{position:absolute;inset:0;background-size:cover;background-position:center;
@@ -106,27 +108,27 @@
     <!-- 声音开关（常驻） -->
     <div id="soundBtn" title="声音开关">🔊</div>
 
-    <!-- 背景音乐（古风 BGM，循环） -->
-    <audio id="bgm" src="assets/bgm.mp3" loop preload="auto"></audio>
+    <!-- 背景音乐（古风 BGM，循环，点击后才加载避免阻塞首屏） -->
+    <audio id="bgm" src="assets/bgm.mp3" loop preload="none"></audio>
 
     <!-- P1 封面 -->
-    <section class="page" id="s-cover" style="background-image:url('assets/p01.jpg?v=2')">
+    <section class="page" id="s-cover" style="background-image:url('assets/p01.jpg?v=3')">
       <div class="hotspot hint" data-go="role1" style="left:25%;top:88%;width:50%;height:6.5%"></div>
     </section>
 
     <!-- P2 田野考古员身份 -->
-    <section class="page" id="s-role1" data-bg="assets/p02.jpg?v=2">
+    <section class="page" id="s-role1" data-bg="assets/p02.jpg?v=3">
       <div class="hotspot hint" data-go="intro" style="left:22%;top:92%;width:56%;height:5.5%"></div>
     </section>
 
     <!-- P3 剧情引导（视频，播完自动进入山洞页） -->
     <section class="page" id="s-intro">
-      <video id="introVideo" src="assets/p03.mp4?v=2" playsinline preload="metadata"></video>
+      <video id="introVideo" src="assets/p03.mp4?v=3" playsinline preload="metadata"></video>
       <div class="skip" id="btn-skip">跳过 ▸</div>
     </section>
 
     <!-- P3.5 山洞 · 进入探方 -->
-    <section class="page" id="s-cave" data-bg="assets/p03b.jpg?v=2">
+    <section class="page" id="s-cave" data-bg="assets/p03b.jpg?v=3">
       <div class="hotspot hint" data-go="map" style="left:22%;top:80.5%;width:56%;height:11%"></div>
     </section>
 
@@ -144,7 +146,7 @@
     </section>
 
     <!-- P7 文物修复师身份 -->
-    <section class="page" id="s-role2" data-bg="assets/p07.jpg?v=2">
+    <section class="page" id="s-role2" data-bg="assets/p07.jpg?v=3">
       <div class="hotspot hint" data-go="clean" style="left:22%;top:92%;width:56%;height:5.5%"></div>
     </section>
 
@@ -238,12 +240,12 @@ const SFX = (()=>{
 const RELICS = [
   {
     id:0, name:'陡刃砾石石器',
-    dig:   { cover:'assets/p05.jpg?v=2', base:'assets/p06.jpg?v=2',
+    dig:   { cover:'assets/p05.jpg?v=3', base:'assets/p06.jpg?v=3',
              target:{x0:.18,y0:.34,x1:.82,y1:.80}, threshold:.55 },
-    clean: { cover:'assets/p08.jpg?v=2', base:'assets/p09.jpg?v=2',
+    clean: { cover:'assets/p08.jpg?v=3', base:'assets/p09.jpg?v=3',
              target:{x0:.12,y0:.34,x1:.76,y1:.74}, threshold:.50 },
-    archive:'assets/p10.jpg?v=2', quiz:'assets/p11.jpg?v=2',
-    correct:'assets/p12.jpg?v=2', wrong:'assets/p13.jpg?v=2',
+    archive:'assets/p10.jpg?v=3', quiz:'assets/p11.jpg?v=3',
+    correct:'assets/p12.jpg?v=3', wrong:'assets/p13.jpg?v=3',
     answer:'B'
   }
   // TODO 第2~6组：溶洞中心居址区 / 早期贝类 / 植物采集 / 第5文化层 / M1墓葬
@@ -260,7 +262,7 @@ const POINTS = [
 ];
 
 /* ---------- 遗址总览背景（下标 = 已点亮遗址数；加文物时补对应点亮图） ---------- */
-const MAP_IMAGES = ['assets/p04.jpg?v=2','assets/p14.jpg?v=2'];  // [0]=全锁  [1]=点1亮  ...后续补 [2][3]...
+const MAP_IMAGES = ['assets/p04.jpg?v=3','assets/p14.jpg?v=3'];  // [0]=全锁  [1]=点1亮  ...后续补 [2][3]...
 
 /* ---------- 全局状态 ---------- */
 const state = {
@@ -496,9 +498,9 @@ go('cover',{flip:false});
 
 /* ---------- 空闲时逐张预取其余图片到缓存（导航更顺，不一次性解码全部） ---------- */
 function prefetchAssets(){
-  const list=['assets/p02.jpg?v=2','assets/p03b.jpg?v=2','assets/p07.jpg?v=2','assets/p04.jpg?v=2','assets/p14.jpg?v=2',
-    'assets/p05.jpg?v=2','assets/p06.jpg?v=2','assets/p08.jpg?v=2','assets/p09.jpg?v=2',
-    'assets/p10.jpg?v=2','assets/p11.jpg?v=2','assets/p12.jpg?v=2','assets/p13.jpg?v=2'];
+  const list=['assets/p02.jpg?v=3','assets/p03b.jpg?v=3','assets/p07.jpg?v=3','assets/p04.jpg?v=3','assets/p14.jpg?v=3',
+    'assets/p05.jpg?v=3','assets/p06.jpg?v=3','assets/p08.jpg?v=3','assets/p09.jpg?v=3',
+    'assets/p10.jpg?v=3','assets/p11.jpg?v=3','assets/p12.jpg?v=3','assets/p13.jpg?v=3'];
   let i=0;
   (function next(){
     if(i>=list.length) return;
