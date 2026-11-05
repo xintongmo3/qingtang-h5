@@ -42,9 +42,9 @@
   /* ========== 热区（透明可点，带轻微呼吸提示） ========== */
   .hotspot{position:absolute;z-index:20;cursor:pointer;border-radius:16px;}
   .hotspot.hint::after{content:"";position:absolute;inset:0;border-radius:16px;
-    border:2px solid rgba(216,168,78,.0);animation:breathe 1.8s ease-in-out infinite;}
-  @keyframes breathe{0%,100%{border-color:rgba(216,168,78,.0);box-shadow:0 0 0 rgba(216,168,78,0);}
-    50%{border-color:rgba(216,168,78,.75);box-shadow:0 0 16px rgba(216,168,78,.5);}}
+    border:2px solid rgba(216,168,78,.75);box-shadow:0 0 16px rgba(216,168,78,.5);
+    opacity:0;animation:breathe 1.8s ease-in-out infinite;will-change:opacity;}
+  @keyframes breathe{0%,100%{opacity:0;}50%{opacity:1;}}
 
   /* ========== 国风 CTA 按钮（图上没画按钮的页面用） ========== */
   .cta{position:absolute;left:50%;transform:translateX(-50%);z-index:25;
@@ -115,23 +115,23 @@
     </section>
 
     <!-- P2 田野考古员身份 -->
-    <section class="page" id="s-role1" style="background-image:url('assets/p02.jpg')">
+    <section class="page" id="s-role1" data-bg="assets/p02.jpg">
       <div class="hotspot hint" data-go="intro" style="left:22%;top:92%;width:56%;height:5.5%"></div>
     </section>
 
     <!-- P3 剧情引导（视频，播完自动进入山洞页） -->
     <section class="page" id="s-intro">
-      <video id="introVideo" src="assets/p03.mp4" playsinline preload="auto"></video>
+      <video id="introVideo" src="assets/p03.mp4" playsinline preload="metadata"></video>
       <div class="skip" id="btn-skip">跳过 ▸</div>
     </section>
 
     <!-- P3.5 山洞 · 进入探方 -->
-    <section class="page" id="s-cave" style="background-image:url('assets/p03b.jpg')">
+    <section class="page" id="s-cave" data-bg="assets/p03b.jpg">
       <div class="hotspot hint" data-go="map" style="left:16%;top:82%;width:68%;height:12%"></div>
     </section>
 
-    <!-- P4 / P14 遗址总览（状态切换背景） -->
-    <section class="page" id="s-map" style="background-image:url('assets/p04.jpg')">
+    <!-- P4 / P14 遗址总览（状态切换背景，JS renderMap 设置） -->
+    <section class="page" id="s-map">
       <!-- 点位热区由 JS 按 POINTS 动态注入 -->
     </section>
 
@@ -144,7 +144,7 @@
     </section>
 
     <!-- P7 文物修复师身份 -->
-    <section class="page" id="s-role2" style="background-image:url('assets/p07.jpg')">
+    <section class="page" id="s-role2" data-bg="assets/p07.jpg">
       <div class="hotspot hint" data-go="clean" style="left:22%;top:92%;width:56%;height:5.5%"></div>
     </section>
 
@@ -156,25 +156,25 @@
       <button class="cta" id="btn-clean" style="top:90%">生 成 考 古 档 案</button>
     </section>
 
-    <!-- P10 考古档案知识卡 -->
-    <section class="page" id="s-archive" style="background-image:url('assets/p10.jpg')">
+    <!-- P10 考古档案知识卡（背景由 onEnter 按文物数据设置） -->
+    <section class="page" id="s-archive">
       <button class="cta" id="btn-archive" style="top:91%">开 始 答 题</button>
     </section>
 
-    <!-- P11 科普答题 -->
-    <section class="page" id="s-quiz" style="background-image:url('assets/p11.jpg')">
+    <!-- P11 科普答题（背景由 onEnter 按文物数据设置） -->
+    <section class="page" id="s-quiz">
       <div class="hotspot" data-ans="A" style="left:27%;top:66.5%;width:46%;height:6.2%"></div>
       <div class="hotspot" data-ans="B" style="left:27%;top:75.5%;width:46%;height:6.2%"></div>
       <div class="hotspot" data-ans="C" style="left:27%;top:84.5%;width:46%;height:6.2%"></div>
     </section>
 
-    <!-- P12 回答正确 -->
-    <section class="page" id="s-correct" style="background-image:url('assets/p12.jpg')">
+    <!-- P12 回答正确（背景由 onEnter 按文物数据设置） -->
+    <section class="page" id="s-correct">
       <button class="cta" id="btn-correct" style="top:92%">下 一 步</button>
     </section>
 
-    <!-- P13 回答错误 -->
-    <section class="page" id="s-wrong" style="background-image:url('assets/p13.jpg')">
+    <!-- P13 回答错误（背景由 onEnter 按文物数据设置） -->
+    <section class="page" id="s-wrong">
       <button class="cta" id="btn-wrong" style="top:92%">返 回 重 答</button>
     </section>
 
@@ -305,6 +305,9 @@ function updateProgress(){
 
 /* ---------- 各页进入时的初始化 ---------- */
 function onEnter(page){
+  // 按需加载当前页背景（data-bg）：只解码当前页，大幅降内存
+  const _el=$(PAGES[page]);
+  if(_el.dataset.bg && !_el.style.backgroundImage) _el.style.backgroundImage=`url('${_el.dataset.bg}')`;
   if(page==='intro'){
     const v=$('introVideo'); v.currentTime=0; v.muted=!soundOn;
     v.onended=()=>{ if(state.page==='intro') go('cave'); };   // 播完自动进山洞页
@@ -396,9 +399,9 @@ function startScratch(kind){
   };
   img.src=cfg.cover;
 
-  let drawing=false, lastSnd=0;
+  let drawing=false, lastSnd=0, crect=canvas.getBoundingClientRect();
   function pos(e){
-    const r=canvas.getBoundingClientRect();
+    const r=crect;
     const p=(e.touches?e.touches[0]:e);
     return {x:(p.clientX-r.left)*(W/r.width), y:(p.clientY-r.top)*(H/r.height)};
   }
@@ -429,7 +432,7 @@ function startScratch(kind){
       setTimeout(()=>cta.classList.add('show'),500);
     }
   }
-  const down=e=>{drawing=true;const p=pos(e);erase(p.x,p.y);e.preventDefault();};
+  const down=e=>{drawing=true;crect=canvas.getBoundingClientRect();const p=pos(e);erase(p.x,p.y);e.preventDefault();};
   const move=e=>{if(!drawing)return;const p=pos(e);erase(p.x,p.y);e.preventDefault();};
   const up=()=>{drawing=false;};
   canvas.onpointerdown=down; canvas.onpointermove=move;
@@ -490,6 +493,21 @@ $('btn-wrong').addEventListener('click',()=>{ SFX.click(); go('quiz'); });
 
 /* ---------- 启动 ---------- */
 go('cover',{flip:false});
+
+/* ---------- 空闲时逐张预取其余图片到缓存（导航更顺，不一次性解码全部） ---------- */
+function prefetchAssets(){
+  const list=['assets/p02.jpg','assets/p03b.jpg','assets/p07.jpg','assets/p04.jpg','assets/p14.jpg',
+    'assets/p05.jpg','assets/p06.jpg','assets/p08.jpg','assets/p09.jpg',
+    'assets/p10.jpg','assets/p11.jpg','assets/p12.jpg','assets/p13.jpg'];
+  let i=0;
+  (function next(){
+    if(i>=list.length) return;
+    const im=new Image();
+    im.onload=im.onerror=()=>setTimeout(next,150);  // 一张一张来，低优先级
+    im.src=list[i++];
+  })();
+}
+(window.requestIdleCallback||((f)=>setTimeout(f,2000)))(prefetchAssets);
 </script>
 </body>
 </html>
