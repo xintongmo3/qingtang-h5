@@ -164,7 +164,7 @@
     <!-- 第三遗址：穿孔蚌器拼图（碎片由 JS 注入） -->
     <section class="page" id="s-puzzle">
       <div class="puzzle-board" id="puzzleBoard">
-        <div class="puzzle-progress" id="puzzleProgress">拼合 0 / 7</div>
+        <div class="puzzle-progress" id="puzzleProgress">拼合 0 / 9</div>
       </div>
     </section>
 
@@ -306,13 +306,15 @@ const RELICS = [
     puzzle:{
       board:'assets/r3-p10-puzzle-board.png?v=6',
       pieces:[
-        { src:'assets/r3-p10-piece-01.png?v=6', start:{left:13.98, top:64.04, width:23.85, height:12.81}, target:{left:18.50, top:29.97, width:20.15, height:12.04} },
-        { src:'assets/r3-p10-piece-02.png?v=6', start:{left:41.94, top:64.04, width:24.26, height:13.32}, target:{left:38.65, top:29.97, width:20.15, height:12.04} },
-        { src:'assets/r3-p10-piece-03.png?v=6', start:{left:69.08, top:63.52, width:17.68, height:12.55}, target:{left:58.39, top:17.93, width:20.15, height:12.04} },
-        { src:'assets/r3-p10-piece-04.png?v=6', start:{left:12.75, top:78.64, width:16.45, height:11.27}, target:{left:18.50, top:41.75, width:20.15, height:12.04} },
-        { src:'assets/r3-p10-piece-05.png?v=6', start:{left:29.61, top:78.12, width:18.09, height:7.17},  target:{left:38.65, top:17.93, width:20.15, height:12.04} },
-        { src:'assets/r3-p10-piece-06.png?v=6', start:{left:41.53, top:81.71, width:18.91, height:8.97},  target:{left:38.65, top:41.75, width:20.15, height:12.04} },
-        { src:'assets/r3-p10-piece-07.png?v=6', start:{left:62.50, top:79.15, width:25.49, height:11.27}, target:{left:58.39, top:41.75, width:20.15, height:12.04} }
+        { src:'assets/r3-tile-01.png?v=7', start:{left:40.75, top:74.90, width:18.50, height:11.55}, target:{left:18.50, top:41.75, width:20.15, height:12.04} },
+        { src:'assets/r3-tile-02.png?v=7', start:{left:63.25, top:87.00, width:18.50, height:11.55}, target:{left:38.65, top:41.75, width:20.15, height:12.04} },
+        { src:'assets/r3-tile-03.png?v=7', start:{left:18.25, top:62.80, width:18.50, height:11.55}, target:{left:58.39, top:41.75, width:20.15, height:12.04} },
+        { src:'assets/r3-tile-04.png?v=7', start:{left:63.25, top:74.90, width:18.50, height:11.55}, target:{left:18.50, top:29.97, width:20.15, height:12.04} },
+        { src:'assets/r3-tile-05.png?v=7', start:{left:63.25, top:62.80, width:18.50, height:11.55}, target:{left:38.65, top:29.97, width:20.15, height:12.04} },
+        { src:'assets/r3-tile-06.png?v=7', start:{left:18.25, top:87.00, width:18.50, height:11.55}, target:{left:58.39, top:29.97, width:20.15, height:12.04} },
+        { src:'assets/r3-tile-07.png?v=7', start:{left:18.25, top:74.90, width:18.50, height:11.55}, target:{left:18.50, top:17.93, width:20.15, height:12.04} },
+        { src:'assets/r3-tile-08.png?v=7', start:{left:40.75, top:87.00, width:18.50, height:11.55}, target:{left:38.65, top:17.93, width:20.15, height:12.04} },
+        { src:'assets/r3-tile-09.png?v=7', start:{left:40.75, top:62.80, width:18.50, height:11.55}, target:{left:58.39, top:17.93, width:20.15, height:12.04} }
       ]
     },
     archive:'assets/r3-p11-archive.jpg?v=6', quiz:'assets/r3-p12-quiz.jpg?v=6',
@@ -693,10 +695,11 @@ function prefetchAssets(){
     'assets/r2-p05-archive.jpg?v=4','assets/r2-p06-quiz.png?v=4',
     'assets/r2-p07-correct.png?v=4','assets/r2-p08-wrong.jpg?v=4',
     'assets/r2-p09-map-2lit.jpg?v=4',
-    'assets/r3-p10-puzzle-board.png?v=6','assets/r3-p10-piece-01.png?v=6',
-    'assets/r3-p10-piece-02.png?v=6','assets/r3-p10-piece-03.png?v=6',
-    'assets/r3-p10-piece-04.png?v=6','assets/r3-p10-piece-05.png?v=6',
-    'assets/r3-p10-piece-06.png?v=6','assets/r3-p10-piece-07.png?v=6',
+    'assets/r3-p10-puzzle-board.png?v=6','assets/r3-tile-01.png?v=7',
+    'assets/r3-tile-02.png?v=7','assets/r3-tile-03.png?v=7',
+    'assets/r3-tile-04.png?v=7','assets/r3-tile-05.png?v=7',
+    'assets/r3-tile-06.png?v=7','assets/r3-tile-07.png?v=7',
+    'assets/r3-tile-08.png?v=7','assets/r3-tile-09.png?v=7',
     'assets/r3-p11-archive.jpg?v=6','assets/r3-p12-quiz.jpg?v=6',
     'assets/r3-p13-correct.jpg?v=6','assets/r3-p14-wrong.jpg?v=6',
     'assets/r3-p15-map-3lit.jpg?v=6'];
