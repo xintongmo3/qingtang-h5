@@ -95,39 +95,6 @@
     font-size:clamp(15px,4vmin,22px);cursor:pointer;user-select:none;}
   #soundBtn:active{transform:scale(.92);}
 </style>
-
-  <!-- ============ 追加层：鹿牙化石（第二遗址）独立交互 · 不改动上方初稿任何样式 ============ -->
-  <style>
-    #r2-layer{position:absolute;inset:0;z-index:60;opacity:0;visibility:hidden;pointer-events:none;
-      transition:opacity .4s ease,visibility .4s;}
-    #r2-layer.open{opacity:1;visibility:visible;pointer-events:auto;}
-    .r2-page{position:absolute;inset:0;background-size:cover;background-position:center;
-      opacity:0;visibility:hidden;transform:translateY(3%);
-      transition:opacity .45s ease,transform .45s cubic-bezier(.2,.85,.25,1);z-index:1;}
-    .r2-page.active{opacity:1;visibility:visible;transform:none;z-index:2;}
-    .r2-hot{position:absolute;z-index:10;cursor:pointer;border-radius:16px;}
-    .r2-hot.pulse::after{content:"";position:absolute;inset:0;border-radius:16px;
-      border:2px solid rgba(216,168,78,.85);box-shadow:0 0 16px rgba(216,168,78,.6);
-      opacity:0;animation:r2breathe 1.8s ease-in-out infinite;}
-    @keyframes r2breathe{0%,100%{opacity:0;}50%{opacity:1;}}
-    .r2-cta{position:absolute;left:50%;transform:translateX(-50%);z-index:12;
-      padding:2.6% 9%;border-radius:40px;background:linear-gradient(180deg,#9c7a4e,#6b4e2e);
-      color:#f3e7c9;font-size:clamp(15px,4.4vmin,25px);letter-spacing:.15em;font-weight:700;
-      border:1.5px solid #d8b878;box-shadow:0 4px 14px rgba(0,0,0,.45),inset 0 1px 2px rgba(255,255,255,.3);
-      cursor:pointer;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.4);
-      opacity:0;pointer-events:none;transition:opacity .4s,transform .15s;}
-    .r2-page.active .r2-cta{opacity:1;pointer-events:auto;animation:r2CtaIn .5s ease;}
-    .r2-cta:active{transform:translateX(-50%) scale(.95);}
-    @keyframes r2CtaIn{from{opacity:0;transform:translate(-50%,10px);}to{opacity:1;transform:translateX(-50%);}}
-    #r2-entry{position:absolute;right:3.5%;bottom:3.2%;z-index:70;
-      padding:1.7% 3.8%;border-radius:30px;background:linear-gradient(180deg,#9c7a4e,#6b4e2e);
-      color:#f3e7c9;font-size:clamp(11px,3vmin,16px);letter-spacing:.06em;font-weight:700;
-      border:1.5px solid #d8b878;box-shadow:0 4px 14px rgba(0,0,0,.5);
-      cursor:pointer;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.4);
-      animation:r2EntryGlow 2.4s ease-in-out infinite;}
-    #r2-entry:active{transform:scale(.95);}
-    @keyframes r2EntryGlow{0%,100%{box-shadow:0 4px 14px rgba(0,0,0,.5),0 0 0 rgba(216,168,78,0);}50%{box-shadow:0 4px 14px rgba(0,0,0,.5),0 0 15px rgba(216,168,78,.85);}}
-  </style>
 </head>
 <body>
 <div id="app">
@@ -215,51 +182,6 @@
 
     <!-- 翻页过渡 -->
     <div id="flip"></div>
-
-    <!-- ============ 追加层：鹿牙化石 P1→P9（顺序严格对应图片） ============ -->
-    <div id="r2-layer">
-      <!-- P1 待挖掘页：底部"挖掘"按钮 -->
-      <section class="r2-page" id="r2-p1" data-bg="assets/r2-p1.jpg">
-        <div class="r2-hot pulse" data-r2go="r2-p2" style="left:26%;top:89%;width:48%;height:7%"></div>
-      </section>
-      <!-- P2 完全挖掘页：底部"挖掘"按钮（继续 → 工作台修复） -->
-      <section class="r2-page" id="r2-p2" data-bg="assets/r2-p2.jpg">
-        <div class="r2-hot pulse" data-r2go="r2-p3" style="left:26%;top:89%;width:48%;height:7%"></div>
-      </section>
-      <!-- P3 待修复页：图上无按钮，追加国风 CTA -->
-      <section class="r2-page" id="r2-p3" data-bg="assets/r2-p3.jpg">
-        <button class="r2-cta" data-r2go="r2-p4" style="top:90%">开 始 修 复</button>
-      </section>
-      <!-- P4 完全修复页：追加 CTA -->
-      <section class="r2-page" id="r2-p4" data-bg="assets/r2-p4.jpg">
-        <button class="r2-cta" data-r2go="r2-p5" style="top:90%">生 成 考 古 档 案</button>
-      </section>
-      <!-- P5 知识卡页：追加 CTA -->
-      <section class="r2-page" id="r2-p5" data-bg="assets/r2-p5.jpg">
-        <button class="r2-cta" data-r2go="r2-p6" style="top:91%">开 始 答 题</button>
-      </section>
-      <!-- P6 小问答页：题目与选项画在图里，答案 A.鹿 -->
-      <section class="r2-page" id="r2-p6" data-bg="assets/r2-p6.png">
-        <div class="r2-hot" data-r2ans="A" style="left:28%;top:66.5%;width:44%;height:6.2%"></div>
-        <div class="r2-hot" data-r2ans="B" style="left:28%;top:75.5%;width:44%;height:6.2%"></div>
-        <div class="r2-hot" data-r2ans="C" style="left:28%;top:84.5%;width:44%;height:6.2%"></div>
-      </section>
-      <!-- P7 回答正确页 -->
-      <section class="r2-page" id="r2-p7" data-bg="assets/r2-p7.png">
-        <button class="r2-cta" data-r2go="r2-p9" style="top:92%">点 亮 新 遗 址</button>
-      </section>
-      <!-- P8 回答错误页 -->
-      <section class="r2-page" id="r2-p8" data-bg="assets/r2-p8.jpg">
-        <button class="r2-cta" data-r2go="r2-p6" style="top:92%">返 回 重 答</button>
-      </section>
-      <!-- P9 第二个遗址点位点亮 -->
-      <section class="r2-page" id="r2-p9" data-bg="assets/r2-p9.jpg">
-        <button class="r2-cta" id="r2-finish" style="top:92%">返 回 遗 址 总 览</button>
-      </section>
-    </div>
-
-    <!-- 悬浮入口（常驻，点击后进入追加层 P1） -->
-    <button id="r2-entry" title="进入鹿牙化石探索">鹿牙化石探索 ▸</button>
   </div>
 </div>
 
@@ -588,59 +510,6 @@ function prefetchAssets(){
   })();
 }
 (window.requestIdleCallback||((f)=>setTimeout(f,2000)))(prefetchAssets);
-</script>
-
-<!-- ============ 追加脚本：鹿牙化石独立交互（IIFE 隔离，不触碰初稿任何变量） ============ -->
-<script>
-(function(){
-  var R2_ANSWER='A';                       // 正确答案：A.鹿（据知识卡与答错解析）
-  var layer=document.getElementById('r2-layer');
-  var entryBtn=document.getElementById('r2-entry');
-  var pages=Array.prototype.slice.call(layer.querySelectorAll('.r2-page'));
-  var timer=null;
-
-  function hideAll(){ pages.forEach(function(p){ p.classList.remove('active'); }); }
-  function go(id){
-    hideAll();
-    var el=document.getElementById(id);
-    if(el && el.dataset.bg && !el.style.backgroundImage){
-      el.style.backgroundImage="url('"+el.dataset.bg+"')";
-    }
-    if(el) el.classList.add('active');
-  }
-  function open(){
-    layer.classList.add('open');          // 显示追加层，盖住初稿（初稿仍在底层运行，不受影响）
-    entryBtn.style.display='none';
-    go('r2-p1');
-  }
-  function close(){
-    clearTimeout(timer);
-    layer.classList.remove('open');
-    hideAll();
-    entryBtn.style.display='';
-  }
-
-  entryBtn.addEventListener('click',function(e){ e.stopPropagation(); open(); });
-
-  // 顺序/跳转热区
-  layer.querySelectorAll('[data-r2go]').forEach(function(el){
-    el.addEventListener('click',function(e){ e.stopPropagation(); go(el.dataset.r2go); });
-  });
-
-  // 答题判定
-  layer.querySelectorAll('[data-r2ans]').forEach(function(el){
-    el.addEventListener('click',function(e){
-      e.stopPropagation();
-      go(el.dataset.r2ans===R2_ANSWER ? 'r2-p7' : 'r2-p8');
-    });
-  });
-
-  // 结束 → 关闭本层，回到初稿原本画面（初稿状态完全不受影响）
-  document.getElementById('r2-finish').addEventListener('click',function(e){
-    e.stopPropagation();
-    close();
-  });
-})();
 </script>
 </body>
 </html>
