@@ -62,6 +62,24 @@
   /* ========== 刮除画布 ========== */
   .scratch{position:absolute;inset:0;z-index:10;touch-action:none;transition:opacity .6s;}
 
+  /* ========== 拼图交互 ========== */
+  #s-puzzle{background:#1a1510;touch-action:none;}
+  .puzzle-board{position:absolute;left:50%;top:50%;width:111.2%;height:100%;
+    transform:translate(-50%,-50%);background:center/100% 100% no-repeat;overflow:hidden;}
+  .puzzle-piece{position:absolute;z-index:8;cursor:grab;touch-action:none;
+    transition:left .34s cubic-bezier(.2,.75,.25,1),top .34s cubic-bezier(.2,.75,.25,1),
+      width .34s cubic-bezier(.2,.75,.25,1),height .34s cubic-bezier(.2,.75,.25,1),transform .34s cubic-bezier(.2,.75,.25,1);
+    filter:drop-shadow(0 5px 5px rgba(54,35,20,.3));will-change:transform,left,top;}
+  .puzzle-piece img{display:block;width:100%;height:100%;pointer-events:none;user-select:none;}
+  .puzzle-piece.dragging{transition:none;cursor:grabbing;z-index:18;
+    filter:drop-shadow(0 12px 9px rgba(54,35,20,.38)) brightness(1.04);}
+  .puzzle-piece.locked{pointer-events:none;z-index:6;filter:drop-shadow(0 2px 2px rgba(54,35,20,.2));}
+  .puzzle-progress{position:absolute;left:50%;top:13.2%;transform:translateX(-50%);z-index:20;
+    padding:.8% 4%;border-radius:24px;background:rgba(58,46,34,.78);border:1px solid rgba(216,184,120,.8);
+    color:#f3e7c9;font-size:clamp(12px,3.3vmin,18px);letter-spacing:.09em;white-space:nowrap;
+    box-shadow:0 3px 12px rgba(0,0,0,.28);touch-action:none;}
+  .puzzle-progress.done{background:rgba(139,111,71,.92);border-color:#f0d9a0;}
+
   /* ========== 成功 / 提示浮层 ========== */
   .toast{position:absolute;left:50%;top:14%;transform:translateX(-50%);z-index:40;
     padding:2.5% 6%;background:rgba(58,46,34,.9);color:#f3e7c9;border:1.5px solid #d8b878;
@@ -94,6 +112,12 @@
     background:rgba(58,46,34,.55);border:1px solid rgba(216,184,120,.6);color:#f3e7c9;
     font-size:clamp(15px,4vmin,22px);cursor:pointer;user-select:none;}
   #soundBtn:active{transform:scale(.92);}
+
+  /* 第三组答题错误页的左上角返回按钮 */
+  #btn-wrong.back-corner{left:19%;transform:none;padding:1.5% 4.8%;border-radius:28px;
+    font-size:clamp(13px,3.8vmin,20px);letter-spacing:.12em;}
+  #btn-wrong.back-corner.show{animation:none;transform:none;}
+  #btn-wrong.back-corner:active{transform:scale(.95);}
 </style>
 </head>
 <body>
@@ -135,6 +159,13 @@
     <!-- P4 / P14 遗址总览（状态切换背景，JS renderMap 设置） -->
     <section class="page" id="s-map">
       <!-- 点位热区由 JS 按 POINTS 动态注入 -->
+    </section>
+
+    <!-- 第三遗址：穿孔蚌器拼图（碎片由 JS 注入） -->
+    <section class="page" id="s-puzzle">
+      <div class="puzzle-board" id="puzzleBoard">
+        <div class="puzzle-progress" id="puzzleProgress">拼合 0 / 7</div>
+      </div>
     </section>
 
     <!-- P5 / P6 文物挖掘（刮土） -->
@@ -269,22 +300,45 @@ const RELICS = [
       {left:30, top:73.5, width:40.5, height:6.0},
       {left:30, top:81.0, width:40.5, height:6.0}
     ]
+  },
+  {
+    id:2, name:'穿孔蚌器', entry:'puzzle',
+    puzzle:{
+      board:'assets/r3-p10-puzzle-board.png?v=5',
+      pieces:[
+        { src:'assets/r3-p10-piece-01.png?v=5', start:{left:13.98, top:64.04, width:23.85, height:12.81}, target:{left:18.50, top:29.97, width:20.15, height:12.04} },
+        { src:'assets/r3-p10-piece-02.png?v=5', start:{left:41.94, top:64.04, width:24.26, height:13.32}, target:{left:38.65, top:29.97, width:20.15, height:12.04} },
+        { src:'assets/r3-p10-piece-03.png?v=5', start:{left:69.08, top:63.52, width:17.68, height:12.55}, target:{left:58.39, top:17.93, width:20.15, height:12.04} },
+        { src:'assets/r3-p10-piece-04.png?v=5', start:{left:12.75, top:78.64, width:16.45, height:11.27}, target:{left:18.50, top:41.75, width:20.15, height:12.04} },
+        { src:'assets/r3-p10-piece-05.png?v=5', start:{left:29.61, top:78.12, width:18.09, height:7.17},  target:{left:38.65, top:17.93, width:20.15, height:12.04} },
+        { src:'assets/r3-p10-piece-06.png?v=5', start:{left:41.53, top:81.71, width:18.91, height:8.97},  target:{left:38.65, top:41.75, width:20.15, height:12.04} },
+        { src:'assets/r3-p10-piece-07.png?v=5', start:{left:62.50, top:79.15, width:25.49, height:11.27}, target:{left:58.39, top:41.75, width:20.15, height:12.04} }
+      ]
+    },
+    archive:'assets/r3-p11-archive.jpg?v=5', quiz:'assets/r3-p12-quiz.jpg?v=5',
+    correct:'assets/r3-p13-correct.jpg?v=5', wrong:'assets/r3-p14-wrong.jpg?v=5',
+    answer:'B', correctLabel:'返 回 遗 址 总 览', cornerBack:true,
+    answerRects:[
+      {left:26, top:69.2, width:48, height:6.2},
+      {left:26, top:77.2, width:48, height:6.2},
+      {left:26, top:85.1, width:48, height:6.2}
+    ]
   }
-  // TODO 第3~6组：早期贝类 / 植物采集 / 第5文化层 / M1墓葬
+  // TODO 第4~6组：植物采集 / 第5文化层 / M1墓葬
 ];
 
 /* ---------- 遗址总览 6 点位（含热区坐标%，建成后填 relic 索引） ---------- */
 const POINTS = [
   { n:1, name:'河滩石器加工区',          relic:0,    x:3,  y:30, w:30, h:13 },
   { n:2, name:'溶洞中心居址区',          relic:1,    x:25, y:42, w:50, h:24 },
-  { n:3, name:'黄门岩2号洞-早期贝类遗存区', relic:null, x:58, y:51, w:34, h:13 },
+  { n:3, name:'黄门岩2号洞-早期贝类遗存区', relic:2,    x:58, y:51, w:34, h:13 },
   { n:4, name:'黄门岩2号洞-植物采集活动区', relic:null, x:2,  y:72, w:30, h:13 },
   { n:5, name:'黄门岩1号洞第5文化层',      relic:null, x:30, y:76, w:26, h:13 },
   { n:6, name:'黄门岩1号洞M1墓葬',        relic:null, x:58, y:80, w:34, h:13 }
 ];
 
 /* ---------- 遗址总览背景（下标 = 已点亮遗址数；加文物时补对应点亮图） ---------- */
-const MAP_IMAGES = ['assets/p04.jpg?v=3','assets/p14.jpg?v=3','assets/r2-p09-map-2lit.jpg?v=4'];  // [0]=全锁 [1]=点1亮 [2]=点1、2亮
+const MAP_IMAGES = ['assets/p04.jpg?v=3','assets/p14.jpg?v=3','assets/r2-p09-map-2lit.jpg?v=4','assets/r3-p15-map-3lit.jpg?v=5'];
 
 /* ---------- 全局状态 ---------- */
 const state = {
@@ -296,7 +350,7 @@ const state = {
 /* ---------- 页面 DOM 映射 ---------- */
 const PAGES = {
   cover:'s-cover', role1:'s-role1', intro:'s-intro', cave:'s-cave', map:'s-map',
-  dig:'s-dig', role2:'s-role2', clean:'s-clean', archive:'s-archive',
+  puzzle:'s-puzzle', dig:'s-dig', role2:'s-role2', clean:'s-clean', archive:'s-archive',
   quiz:'s-quiz', correct:'s-correct', wrong:'s-wrong'
 };
 const $ = id => document.getElementById(id);
@@ -322,7 +376,7 @@ function go(page, {flip=true}={}){
 function updateProgress(){
   const bar=$('progress');
   // 封面/身份/剧情页不显示进度条，进入地图后常驻
-  const show=['map','dig','role2','clean','archive','quiz','correct','wrong'].includes(state.page);
+  const show=['map','puzzle','dig','role2','clean','archive','quiz','correct','wrong'].includes(state.page);
   bar.classList.toggle('show',show);
   [...bar.children].forEach((c,i)=>c.classList.toggle('lit', i<state.unlockedCount));
 }
@@ -344,6 +398,7 @@ function onEnter(page){
   if(page==='clean')  startScratch('clean');
   // 档案/答题/正确/错误页：背景按当前文物数据切换（多文物可扩展）
   const r=RELICS[state.currentRelic];
+  if(page==='puzzle') startPuzzle();
   if(page==='archive'){ $('s-archive').style.backgroundImage=`url('${r.archive}')`; $('btn-archive').classList.add('show'); }
   if(page==='quiz'){
     $('s-quiz').style.backgroundImage=`url('${r.quiz}')`;
@@ -357,7 +412,14 @@ function onEnter(page){
     $('btn-correct').textContent=r.correctLabel||'下 一 步';
     $('btn-correct').classList.add('show');
   }
-  if(page==='wrong'){   $('s-wrong').style.backgroundImage=`url('${r.wrong}')`; $('btn-wrong').classList.add('show'); }
+  if(page==='wrong'){
+    const btn=$('btn-wrong');
+    $('s-wrong').style.backgroundImage=`url('${r.wrong}')`;
+    btn.classList.toggle('back-corner',!!r.cornerBack);
+    btn.style.top=r.cornerBack?'3.2%':'92%';
+    btn.textContent=r.cornerBack?'返 回':'返 回 重 答';
+    btn.classList.add('show');
+  }
 }
 
 /* ---------- 遗址总览：按状态切背景 + 注入点位热区 ---------- */
@@ -373,11 +435,97 @@ function renderMap(){
     const built  = p.relic!==null && RELICS[p.relic]; // 已有素材
     if(isNext && built){
       el.classList.add('hint');
-      el.onclick=()=>{ SFX.click(); state.currentRelic=p.relic; go('dig'); };
+      el.onclick=()=>{ SFX.click(); state.currentRelic=p.relic; go(RELICS[p.relic].entry||'dig'); };
     }else{
       el.onclick=()=>toast(idx<state.unlockedCount?'该遗址已点亮':'后续遗址敬请期待，请先完成当前区域', 's-map');
     }
     map.appendChild(el);
+  });
+}
+
+/* ---------- 穿孔蚌器拼图：拖拽、错误回弹、正确吸附 ---------- */
+function startPuzzle(){
+  const relic=RELICS[state.currentRelic];
+  const cfg=relic.puzzle;
+  const board=$('puzzleBoard');
+  const progress=$('puzzleProgress');
+  board.style.backgroundImage=`url('${cfg.board}')`;
+  board.querySelectorAll('.puzzle-piece').forEach(el=>el.remove());
+  progress.textContent=`拼合 0 / ${cfg.pieces.length}`;
+  progress.classList.remove('done');
+
+  let locked=0;
+  cfg.pieces.forEach((pieceCfg,index)=>{
+    const piece=document.createElement('div');
+    piece.className='puzzle-piece';
+    piece.dataset.index=index;
+    piece.style.cssText=`left:${pieceCfg.start.left}%;top:${pieceCfg.start.top}%;width:${pieceCfg.start.width}%;height:${pieceCfg.start.height}%`;
+    const img=document.createElement('img');
+    img.src=pieceCfg.src;
+    img.alt=`拼图碎片${index+1}`;
+    img.draggable=false;
+    img.loading='eager';
+    img.addEventListener('error',()=>{
+      if(img.dataset.retried) return;
+      img.dataset.retried='1';
+      const retrySrc=`${pieceCfg.src}${pieceCfg.src.includes('?')?'&':'?'}retry=1`;
+      setTimeout(()=>{ img.src=retrySrc; },80);
+    });
+    piece.appendChild(img);
+    board.appendChild(piece);
+
+    let dragStart=null;
+    piece.addEventListener('pointerdown',e=>{
+      if(piece.classList.contains('locked')) return;
+      e.preventDefault();
+      dragStart={x:e.clientX,y:e.clientY,id:e.pointerId};
+      piece.classList.add('dragging');
+      piece.setPointerCapture(e.pointerId);
+    });
+    piece.addEventListener('pointermove',e=>{
+      if(!dragStart||e.pointerId!==dragStart.id) return;
+      e.preventDefault();
+      const dx=e.clientX-dragStart.x;
+      const dy=e.clientY-dragStart.y;
+      piece.style.transform=`translate(${dx}px,${dy}px)`;
+    });
+    const finishDrag=e=>{
+      if(!dragStart||e.pointerId!==dragStart.id) return;
+      const pr=piece.getBoundingClientRect();
+      const br=board.getBoundingClientRect();
+      const cx=(pr.left+pr.width/2-br.left)/br.width*100;
+      const cy=(pr.top+pr.height/2-br.top)/br.height*100;
+      const t=pieceCfg.target;
+      const padX=t.width*.12, padY=t.height*.12;
+      const correct=cx>=t.left-padX&&cx<=t.left+t.width+padX&&cy>=t.top-padY&&cy<=t.top+t.height+padY;
+      dragStart=null;
+      if(piece.hasPointerCapture(e.pointerId)) piece.releasePointerCapture(e.pointerId);
+      piece.classList.remove('dragging');
+      if(correct){
+        piece.style.transform='';
+        piece.style.left=`${t.left}%`;
+        piece.style.top=`${t.top}%`;
+        piece.style.width=`${t.width}%`;
+        piece.style.height=`${t.height}%`;
+        piece.classList.add('locked');
+        locked++;
+        progress.textContent=`拼合 ${locked} / ${cfg.pieces.length}`;
+        SFX.reveal();
+        if(locked===cfg.pieces.length){
+          progress.textContent='拼合完成';
+          progress.classList.add('done');
+          SFX.light();
+          toast('拼合完成，正在前往知识卡片','s-puzzle');
+          setTimeout(()=>{ if(state.page==='puzzle') go('archive'); },1100);
+        }
+      }else{
+        piece.style.transform='';
+        SFX.wrong();
+        toast('位置不对，再试一次','s-puzzle');
+      }
+    };
+    piece.addEventListener('pointerup',finishDrag);
+    piece.addEventListener('pointercancel',finishDrag);
   });
 }
 
@@ -544,7 +692,14 @@ function prefetchAssets(){
     'assets/r2-p03-clean-cover.jpg?v=4','assets/r2-p04-clean-base.jpg?v=4',
     'assets/r2-p05-archive.jpg?v=4','assets/r2-p06-quiz.png?v=4',
     'assets/r2-p07-correct.png?v=4','assets/r2-p08-wrong.jpg?v=4',
-    'assets/r2-p09-map-2lit.jpg?v=4'];
+    'assets/r2-p09-map-2lit.jpg?v=4',
+    'assets/r3-p10-puzzle-board.png?v=5','assets/r3-p10-piece-01.png?v=5',
+    'assets/r3-p10-piece-02.png?v=5','assets/r3-p10-piece-03.png?v=5',
+    'assets/r3-p10-piece-04.png?v=5','assets/r3-p10-piece-05.png?v=5',
+    'assets/r3-p10-piece-06.png?v=5','assets/r3-p10-piece-07.png?v=5',
+    'assets/r3-p11-archive.jpg?v=5','assets/r3-p12-quiz.jpg?v=5',
+    'assets/r3-p13-correct.jpg?v=5','assets/r3-p14-wrong.jpg?v=5',
+    'assets/r3-p15-map-3lit.jpg?v=5'];
   let i=0;
   (function next(){
     if(i>=list.length) return;
