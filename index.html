@@ -246,15 +246,37 @@ const RELICS = [
              target:{x0:.12,y0:.34,x1:.76,y1:.74}, threshold:.50 },
     archive:'assets/p10.jpg?v=3', quiz:'assets/p11.jpg?v=3',
     correct:'assets/p12.jpg?v=3', wrong:'assets/p13.jpg?v=3',
-    answer:'B'
+    answer:'B',
+    answerRects:[
+      {left:27, top:66.5, width:46, height:6.2},
+      {left:27, top:75.5, width:46, height:6.2},
+      {left:27, top:84.5, width:46, height:6.2}
+    ]
+  },
+  {
+    id:1, name:'鹿牙化石',
+    dig:   { cover:'assets/r2-p01-dig-cover.jpg?v=4', base:'assets/r2-p02-dig-base.jpg?v=4',
+             target:{x0:.20,y0:.25,x1:.80,y1:.62}, threshold:.50 },
+    clean: { cover:'assets/r2-p03-clean-cover.jpg?v=4', base:'assets/r2-p04-clean-base.jpg?v=4',
+             target:{x0:.12,y0:.28,x1:.78,y1:.66}, threshold:.48 },
+    archive:'assets/r2-p05-archive.jpg?v=4', quiz:'assets/r2-p06-quiz.png?v=4',
+    correct:'assets/r2-p07-correct.png?v=4', wrong:'assets/r2-p08-wrong.jpg?v=4',
+    answer:'A',
+    correctLabel:'返 回 遗 址 总 览',
+    autoNext:{ dig:'clean', clean:'archive' },
+    answerRects:[
+      {left:29, top:72.4, width:42, height:6.4},
+      {left:29, top:80.0, width:42, height:6.4},
+      {left:29, top:87.7, width:42, height:6.4}
+    ]
   }
-  // TODO 第2~6组：溶洞中心居址区 / 早期贝类 / 植物采集 / 第5文化层 / M1墓葬
+  // TODO 第3~6组：早期贝类 / 植物采集 / 第5文化层 / M1墓葬
 ];
 
 /* ---------- 遗址总览 6 点位（含热区坐标%，建成后填 relic 索引） ---------- */
 const POINTS = [
   { n:1, name:'河滩石器加工区',          relic:0,    x:3,  y:30, w:30, h:13 },
-  { n:2, name:'溶洞中心居址区',          relic:null, x:27, y:46, w:26, h:12 },
+  { n:2, name:'溶洞中心居址区',          relic:1,    x:25, y:42, w:50, h:24 },
   { n:3, name:'黄门岩2号洞-早期贝类遗存区', relic:null, x:58, y:51, w:34, h:13 },
   { n:4, name:'黄门岩2号洞-植物采集活动区', relic:null, x:2,  y:72, w:30, h:13 },
   { n:5, name:'黄门岩1号洞第5文化层',      relic:null, x:30, y:76, w:26, h:13 },
@@ -262,7 +284,7 @@ const POINTS = [
 ];
 
 /* ---------- 遗址总览背景（下标 = 已点亮遗址数；加文物时补对应点亮图） ---------- */
-const MAP_IMAGES = ['assets/p04.jpg?v=3','assets/p14.jpg?v=3'];  // [0]=全锁  [1]=点1亮  ...后续补 [2][3]...
+const MAP_IMAGES = ['assets/p04.jpg?v=3','assets/p14.jpg?v=3','assets/r2-p09-map-2lit.jpg?v=4'];  // [0]=全锁 [1]=点1亮 [2]=点1、2亮
 
 /* ---------- 全局状态 ---------- */
 const state = {
@@ -323,8 +345,18 @@ function onEnter(page){
   // 档案/答题/正确/错误页：背景按当前文物数据切换（多文物可扩展）
   const r=RELICS[state.currentRelic];
   if(page==='archive'){ $('s-archive').style.backgroundImage=`url('${r.archive}')`; $('btn-archive').classList.add('show'); }
-  if(page==='quiz')     $('s-quiz').style.backgroundImage=`url('${r.quiz}')`;
-  if(page==='correct'){ $('s-correct').style.backgroundImage=`url('${r.correct}')`; $('btn-correct').classList.add('show'); }
+  if(page==='quiz'){
+    $('s-quiz').style.backgroundImage=`url('${r.quiz}')`;
+    document.querySelectorAll('[data-ans]').forEach((el,i)=>{
+      const rect=r.answerRects[i];
+      if(rect) el.style.cssText=`left:${rect.left}%;top:${rect.top}%;width:${rect.width}%;height:${rect.height}%`;
+    });
+  }
+  if(page==='correct'){
+    $('s-correct').style.backgroundImage=`url('${r.correct}')`;
+    $('btn-correct').textContent=r.correctLabel||'下 一 步';
+    $('btn-correct').classList.add('show');
+  }
   if(page==='wrong'){   $('s-wrong').style.backgroundImage=`url('${r.wrong}')`; $('btn-wrong').classList.add('show'); }
 }
 
@@ -431,7 +463,14 @@ function startScratch(kind){
       canvas.style.pointerEvents='none';
       canvas.style.opacity='0';
       toastEl.classList.add('show');
-      setTimeout(()=>cta.classList.add('show'),500);
+      const nextPage=relic.autoNext&&relic.autoNext[kind];
+      if(nextPage){
+        setTimeout(()=>{
+          if(state.page===kind && state.currentRelic===relic.id) go(nextPage);
+        },900);
+      }else{
+        setTimeout(()=>cta.classList.add('show'),500);
+      }
     }
   }
   const down=e=>{drawing=true;crect=canvas.getBoundingClientRect();const p=pos(e);erase(p.x,p.y);e.preventDefault();};
