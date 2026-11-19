@@ -120,7 +120,7 @@
   #btn-wrong.back-corner:active{transform:scale(.95);}
 
   /* 第三组知识卡底部按钮：缩小并下移，避免遮挡介绍文字 */
-  #btn-archive.compact{padding:1.7% 6.5%;font-size:clamp(13px,3.8vmin,21px);letter-spacing:.1em;}
+  .cta.compact{padding:1.7% 6.5%;font-size:clamp(13px,3.8vmin,21px);letter-spacing:.1em;}
 </style>
 </head>
 <body>
@@ -212,6 +212,11 @@
     <!-- P13 回答错误（背景由 onEnter 按文物数据设置） -->
     <section class="page" id="s-wrong">
       <button class="cta" id="btn-wrong" style="top:92%">返 回 重 答</button>
+    </section>
+
+    <!-- 第四遗址探索完成页 -->
+    <section class="page" id="s-finish">
+      <button class="cta compact" id="btn-finish" style="top:92%">下一步</button>
     </section>
 
     <!-- 翻页过渡 -->
@@ -328,8 +333,22 @@ const RELICS = [
       {left:26, top:77.2, width:48, height:6.2},
       {left:26, top:85.1, width:48, height:6.2}
     ]
+  },
+  {
+    id:3, name:'早期绳纹陶片', entry:'quiz',
+    quiz:'assets/r4-p16-quiz.jpg?v=8',
+    correct:'assets/r4-p17-knowledge.jpg?v=8',
+    wrong:'assets/r4-p18-wrong.jpg?v=8',
+    complete:'assets/r4-p19-complete.jpg?v=8',
+    answer:'C', correctLabel:'下一步', finishLabel:'下一步',
+    cornerBack:true, compactCorrect:true, afterCorrect:'finish',
+    answerRects:[
+      {left:24, top:63.0, width:42, height:9.0},
+      {left:30, top:74.5, width:36, height:8.0},
+      {left:24, top:84.0, width:38, height:9.0}
+    ]
   }
-  // TODO 第4~6组：植物采集 / 第5文化层 / M1墓葬
+  // TODO 第5~6组：第5文化层 / M1墓葬
 ];
 
 /* ---------- 遗址总览 6 点位（含热区坐标%，建成后填 relic 索引） ---------- */
@@ -337,13 +356,14 @@ const POINTS = [
   { n:1, name:'河滩石器加工区',          relic:0,    x:3,  y:30, w:30, h:13 },
   { n:2, name:'溶洞中心居址区',          relic:1,    x:25, y:42, w:50, h:24 },
   { n:3, name:'黄门岩2号洞-早期贝类遗存区', relic:2,    x:58, y:51, w:34, h:13 },
-  { n:4, name:'黄门岩2号洞-植物采集活动区', relic:null, x:2,  y:72, w:30, h:13 },
+  { n:4, name:'黄门岩2号洞-植物采集活动区', relic:3,    x:2,  y:72, w:30, h:13 },
   { n:5, name:'黄门岩1号洞第5文化层',      relic:null, x:30, y:76, w:26, h:13 },
   { n:6, name:'黄门岩1号洞M1墓葬',        relic:null, x:58, y:80, w:34, h:13 }
 ];
 
 /* ---------- 遗址总览背景（下标 = 已点亮遗址数；加文物时补对应点亮图） ---------- */
-const MAP_IMAGES = ['assets/p04.jpg?v=3','assets/p14.jpg?v=3','assets/r2-p09-map-2lit.jpg?v=4','assets/r3-p15-map-3lit.jpg?v=6'];
+const MAP_IMAGES = ['assets/p04.jpg?v=3','assets/p14.jpg?v=3','assets/r2-p09-map-2lit.jpg?v=4',
+  'assets/r3-p15-map-3lit.jpg?v=6','assets/r4-p20-map-4lit.jpg?v=8'];
 
 /* ---------- 全局状态 ---------- */
 const state = {
@@ -356,7 +376,7 @@ const state = {
 const PAGES = {
   cover:'s-cover', role1:'s-role1', intro:'s-intro', cave:'s-cave', map:'s-map',
   puzzle:'s-puzzle', dig:'s-dig', role2:'s-role2', clean:'s-clean', archive:'s-archive',
-  quiz:'s-quiz', correct:'s-correct', wrong:'s-wrong'
+  quiz:'s-quiz', correct:'s-correct', wrong:'s-wrong', finish:'s-finish'
 };
 const $ = id => document.getElementById(id);
 
@@ -381,7 +401,7 @@ function go(page, {flip=true}={}){
 function updateProgress(){
   const bar=$('progress');
   // 封面/身份/剧情页不显示进度条，进入地图后常驻
-  const show=['map','puzzle','dig','role2','clean','archive','quiz','correct','wrong'].includes(state.page);
+  const show=['map','puzzle','dig','role2','clean','archive','quiz','correct','wrong','finish'].includes(state.page);
   bar.classList.toggle('show',show);
   [...bar.children].forEach((c,i)=>c.classList.toggle('lit', i<state.unlockedCount));
 }
@@ -420,6 +440,8 @@ function onEnter(page){
   }
   if(page==='correct'){
     $('s-correct').style.backgroundImage=`url('${r.correct}')`;
+    $('btn-correct').classList.toggle('compact',!!r.compactCorrect);
+    $('btn-correct').style.top=r.compactCorrect?'92.5%':'92%';
     $('btn-correct').textContent=r.correctLabel||'下 一 步';
     $('btn-correct').classList.add('show');
   }
@@ -429,6 +451,12 @@ function onEnter(page){
     btn.classList.toggle('back-corner',!!r.cornerBack);
     btn.style.top=r.cornerBack?'3.2%':'92%';
     btn.textContent=r.cornerBack?'返 回':'返 回 重 答';
+    btn.classList.add('show');
+  }
+  if(page==='finish'){
+    $('s-finish').style.backgroundImage=`url('${r.complete}')`;
+    const btn=$('btn-finish');
+    btn.textContent=r.finishLabel||'下一步';
     btn.classList.add('show');
   }
 }
@@ -684,12 +712,20 @@ document.querySelectorAll('[data-ans]').forEach(el=>{
 });
 // 回答正确 → 点亮遗址 → 遗址总览（P14 态）
 $('btn-correct').addEventListener('click',()=>{
+  const relic=RELICS[state.currentRelic];
+  if(relic.afterCorrect){ SFX.click(); go(relic.afterCorrect); return; }
   if(state.unlockedCount<=state.currentRelic) state.unlockedCount=state.currentRelic+1;
   SFX.light();
   go('map');
 });
 // 回答错误 → 返回答题
 $('btn-wrong').addEventListener('click',()=>{ SFX.click(); go('quiz'); });
+// 第四遗址探索完成 → 点亮第四点位
+$('btn-finish').addEventListener('click',()=>{
+  if(state.unlockedCount<=state.currentRelic) state.unlockedCount=state.currentRelic+1;
+  SFX.light();
+  go('map');
+});
 
 /* ---------- 启动 ---------- */
 go('cover',{flip:false});
@@ -711,7 +747,10 @@ function prefetchAssets(){
     'assets/r3-tile-08.png?v=7','assets/r3-tile-09.png?v=7',
     'assets/r3-p11-archive.jpg?v=6','assets/r3-p12-quiz.jpg?v=6',
     'assets/r3-p13-correct.jpg?v=6','assets/r3-p14-wrong.jpg?v=6',
-    'assets/r3-p15-map-3lit.jpg?v=6'];
+    'assets/r3-p15-map-3lit.jpg?v=6',
+    'assets/r4-p16-quiz.jpg?v=8','assets/r4-p17-knowledge.jpg?v=8',
+    'assets/r4-p18-wrong.jpg?v=8','assets/r4-p19-complete.jpg?v=8',
+    'assets/r4-p20-map-4lit.jpg?v=8'];
   let i=0;
   (function next(){
     if(i>=list.length) return;
