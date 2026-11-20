@@ -145,7 +145,7 @@
   .story-continue.show{opacity:1;}
 
   /* P34 结束页的图内按钮热区 */
-  #s-ending-summary .summary-hotspot{left:8.5%;top:69.8%;width:83%;height:8.2%;}
+  #s-ending-summary .summary-hotspot{left:6%;top:67.5%;width:88%;height:15%;touch-action:manipulation;}
 
   /* 考古报告中的个性信息 */
   #s-report{background-color:#e9dbc2;}
@@ -820,16 +820,15 @@ function setCompletionDate(){
 }
 
 function showNameDialog(){
+  const dialog=$('nameDialog');
+  const input=$('explorerName');
+  const current=$('reportName').textContent.trim();
+  input.value=current&&current!=='青塘探源者'?current:'';
+  dialog.classList.add('show');
   clearTimeout(reportDialogTimer);
   reportDialogTimer=setTimeout(()=>{
-    if(state.page!=='report') return;
-    const dialog=$('nameDialog');
-    const input=$('explorerName');
-    const current=$('reportName').textContent.trim();
-    input.value=current&&current!=='青塘探源者'?current:'';
-    dialog.classList.add('show');
-    setTimeout(()=>input.focus({preventScroll:true}),120);
-  },330);
+    if(state.page==='report') input.focus({preventScroll:true});
+  },120);
 }
 
 /* ---------- 通用提示 ---------- */
