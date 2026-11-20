@@ -347,8 +347,24 @@ const RELICS = [
       {left:30, top:74.5, width:36, height:8.0},
       {left:24, top:84.0, width:38, height:9.0}
     ]
+  },
+  {
+    id:4, name:'青塘骨针', entry:'quiz',
+    quiz:'assets/r5-p21-quiz.png?v=9',
+    correct:'assets/r5-p22-knowledge.jpg?v=9',
+    wrong:'assets/r5-p23-wrong.jpg?v=9',
+    complete:'assets/r5-p24-complete.png?v=9',
+    answer:'A', correctLabel:'下一步', finishLabel:'下一步',
+    cornerBack:true, backCompact:true, backLabel:'返回', backLeft:'1.8%', backTop:'12.8%',
+    compactCorrect:true, correctTop:'92.9%', finishTop:'92.9%',
+    afterCorrect:'finish',
+    answerRects:[
+      {left:28, top:61.5, width:44, height:11.5},
+      {left:28, top:72.8, width:44, height:10.8},
+      {left:28, top:83.5, width:44, height:10.0}
+    ]
   }
-  // TODO 第5~6组：第5文化层 / M1墓葬
+  // TODO 第6组：M1墓葬
 ];
 
 /* ---------- 遗址总览 6 点位（含热区坐标%，建成后填 relic 索引） ---------- */
@@ -357,13 +373,14 @@ const POINTS = [
   { n:2, name:'溶洞中心居址区',          relic:1,    x:25, y:42, w:50, h:24 },
   { n:3, name:'黄门岩2号洞-早期贝类遗存区', relic:2,    x:58, y:51, w:34, h:13 },
   { n:4, name:'黄门岩2号洞-植物采集活动区', relic:3,    x:2,  y:72, w:30, h:13 },
-  { n:5, name:'黄门岩1号洞第5文化层',      relic:null, x:30, y:76, w:26, h:13 },
+  { n:5, name:'黄门岩1号洞第5文化层',      relic:4,    x:30, y:76, w:26, h:13 },
   { n:6, name:'黄门岩1号洞M1墓葬',        relic:null, x:58, y:80, w:34, h:13 }
 ];
 
 /* ---------- 遗址总览背景（下标 = 已点亮遗址数；加文物时补对应点亮图） ---------- */
 const MAP_IMAGES = ['assets/p04.jpg?v=3','assets/p14.jpg?v=3','assets/r2-p09-map-2lit.jpg?v=4',
-  'assets/r3-p15-map-3lit.jpg?v=6','assets/r4-p20-map-4lit.jpg?v=8'];
+  'assets/r3-p15-map-3lit.jpg?v=6','assets/r4-p20-map-4lit.jpg?v=8',
+  'assets/r5-p25-map-5lit.png?v=9'];
 
 /* ---------- 全局状态 ---------- */
 const state = {
@@ -439,23 +456,28 @@ function onEnter(page){
     });
   }
   if(page==='correct'){
+    const btn=$('btn-correct');
     $('s-correct').style.backgroundImage=`url('${r.correct}')`;
-    $('btn-correct').classList.toggle('compact',!!r.compactCorrect);
-    $('btn-correct').style.top=r.compactCorrect?'92.5%':'92%';
-    $('btn-correct').textContent=r.correctLabel||'下 一 步';
-    $('btn-correct').classList.add('show');
+    btn.classList.toggle('compact',!!r.compactCorrect);
+    btn.style.top=r.correctTop||(r.compactCorrect?'92.5%':'92%');
+    btn.textContent=r.correctLabel||'下 一 步';
+    btn.classList.add('show');
   }
   if(page==='wrong'){
     const btn=$('btn-wrong');
     $('s-wrong').style.backgroundImage=`url('${r.wrong}')`;
     btn.classList.toggle('back-corner',!!r.cornerBack);
-    btn.style.top=r.cornerBack?'3.2%':'92%';
-    btn.textContent=r.cornerBack?'返 回':'返 回 重 答';
+    btn.style.left=r.backLeft||'';
+    btn.style.top=r.backTop||(r.cornerBack?'3.2%':'92%');
+    btn.style.padding=r.backCompact?'0.8% 2%':'';
+    btn.style.fontSize=r.backCompact?'clamp(12px,3.1vmin,18px)':'';
+    btn.textContent=r.backLabel||(r.cornerBack?'返 回':'返 回 重 答');
     btn.classList.add('show');
   }
   if(page==='finish'){
     $('s-finish').style.backgroundImage=`url('${r.complete}')`;
     const btn=$('btn-finish');
+    btn.style.top=r.finishTop||'92%';
     btn.textContent=r.finishLabel||'下一步';
     btn.classList.add('show');
   }
@@ -750,7 +772,9 @@ function prefetchAssets(){
     'assets/r3-p15-map-3lit.jpg?v=6',
     'assets/r4-p16-quiz.jpg?v=8','assets/r4-p17-knowledge.jpg?v=8',
     'assets/r4-p18-wrong.jpg?v=8','assets/r4-p19-complete.jpg?v=8',
-    'assets/r4-p20-map-4lit.jpg?v=8'];
+    'assets/r4-p20-map-4lit.jpg?v=8','assets/r5-p21-quiz.png?v=9',
+    'assets/r5-p22-knowledge.jpg?v=9','assets/r5-p23-wrong.jpg?v=9',
+    'assets/r5-p24-complete.png?v=9','assets/r5-p25-map-5lit.png?v=9'];
   let i=0;
   (function next(){
     if(i>=list.length) return;
