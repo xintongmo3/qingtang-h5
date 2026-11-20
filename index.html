@@ -127,6 +127,52 @@
     background:rgba(244,233,210,.94);border-radius:12px;box-shadow:inset 0 0 28px rgba(114,82,44,.12);
     backdrop-filter:blur(2px);display:none;pointer-events:none;}
   .r6-piece-backdrop.show{display:block;}
+
+  /* 结尾叙事页 */
+  .ending-hit{position:absolute;inset:0;z-index:20;cursor:pointer;}
+  .ending-prompt{position:absolute;left:50%;bottom:5.2%;transform:translateX(-50%);z-index:22;
+    color:rgba(58,36,20,.72);font-size:clamp(12px,3.2vmin,18px);letter-spacing:.18em;
+    white-space:nowrap;animation:endingPrompt 2s ease-in-out infinite;pointer-events:none;}
+  @keyframes endingPrompt{0%,100%{opacity:.45;}50%{opacity:.95;}}
+  .ending-copy{position:absolute;left:5.7%;top:19%;width:88.6%;height:69%;z-index:22;
+    color:#2c160c;text-align:center;font-weight:700;font-size:clamp(14px,4.1vmin,23px);
+    line-height:1.62;letter-spacing:.025em;text-shadow:0 1px 0 rgba(255,248,228,.55);pointer-events:none;}
+  .ending-line{display:block;min-height:1.62em;white-space:nowrap;}
+  .ending-line.is-gap{min-height:.72em;}
+  .ending-line .char{opacity:0;filter:blur(2px);transition:opacity .28s ease,filter .28s ease;}
+  .ending-line .char.shown{opacity:1;filter:blur(0);}
+  .story-continue{opacity:0;transition:opacity .5s ease;}
+  .story-continue.show{opacity:1;}
+
+  /* P34 结束页的图内按钮热区 */
+  #s-ending-summary .summary-hotspot{left:8.5%;top:69.8%;width:83%;height:8.2%;}
+
+  /* 考古报告中的个性信息 */
+  #s-report{background-color:#e9dbc2;}
+  .report-value{position:absolute;top:46.6%;z-index:24;height:3.2%;display:flex;align-items:center;
+    color:#21170f;font-weight:700;font-size:clamp(11px,3.05vmin,17px);line-height:1;white-space:nowrap;
+    overflow:hidden;background:rgba(244,232,209,.9);backdrop-filter:blur(2px);border-radius:3px;
+    padding:0 .45em;text-shadow:0 1px 0 rgba(255,255,255,.4);}
+  .report-value.name{left:13.4%;width:23.5%;cursor:pointer;}
+  .report-value.date{left:70.7%;width:21.5%;}
+
+  .name-dialog{position:absolute;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
+    padding:9%;background:rgba(40,27,17,.6);backdrop-filter:blur(4px);}
+  .name-dialog.show{display:flex;}
+  .name-panel{width:100%;max-width:340px;padding:7.5% 7%;border-radius:16px;
+    background:linear-gradient(180deg,#f5ead4,#e6d3ad);border:2px solid #9f7544;
+    box-shadow:0 18px 45px rgba(24,15,8,.46),inset 0 0 26px rgba(120,81,35,.12);color:#332216;}
+  .name-panel h2{font-size:clamp(20px,5.6vmin,30px);text-align:center;letter-spacing:.12em;margin-bottom:4%;}
+  .name-panel p{font-size:clamp(12px,3.4vmin,17px);line-height:1.55;text-align:center;color:#6b4e34;margin-bottom:7%;}
+  .name-panel input{display:block;width:100%;border:1px solid rgba(107,74,43,.55);border-radius:8px;
+    background:rgba(255,251,239,.9);padding:3.4% 4%;font:inherit;font-size:clamp(16px,4.2vmin,22px);
+    color:#2d1d12;text-align:center;outline:none;}
+  .name-panel input:focus{border-color:#8B6F47;box-shadow:0 0 0 3px rgba(139,111,71,.18);}
+  .name-submit{display:block;width:86%;margin:7% auto 0;padding:3.2% 5%;border-radius:30px;
+    border:1.5px solid #d8b878;background:var(--cta-grad);color:#f3e7c9;font:inherit;font-weight:700;
+    font-size:clamp(15px,4.1vmin,21px);letter-spacing:.14em;cursor:pointer;
+    box-shadow:0 5px 14px rgba(58,38,20,.3);}
+  .name-submit:active{transform:scale(.97);}
 </style>
 </head>
 <body>
@@ -224,6 +270,41 @@
     <section class="page" id="s-finish">
       <button class="cta compact" id="btn-finish" style="top:92%">下一步</button>
     </section>
+
+    <!-- P32 结尾空景 -->
+    <section class="page" id="s-ending-intro" data-bg="assets/ending-p32-empty.jpg?v=11">
+      <div class="ending-hit" id="endingIntroHit"></div>
+      <div class="ending-prompt">轻触屏幕，继续</div>
+    </section>
+
+    <!-- P33 结尾文字逐字浮现 -->
+    <section class="page" id="s-ending-story" data-bg="assets/ending-p32-empty.jpg?v=11">
+      <div class="ending-hit" id="endingStoryHit"></div>
+      <div class="ending-copy" id="endingCopy"></div>
+      <div class="ending-prompt story-continue" id="storyContinue">轻触屏幕，继续</div>
+    </section>
+
+    <!-- P34 完成六组探索 -->
+    <section class="page" id="s-ending-summary" data-bg="assets/ending-p34-summary.jpg?v=11">
+      <div class="hotspot summary-hotspot" data-go="report"></div>
+    </section>
+
+    <!-- P35 专属考古报告 -->
+    <section class="page" id="s-report" data-bg="assets/ending-p35-report.jpg?v=11">
+      <div class="report-value name" id="reportName" title="点击修改姓名"></div>
+      <div class="report-value date" id="reportDate"></div>
+    </section>
+
+    <!-- 探索者姓名输入 -->
+    <div class="name-dialog" id="nameDialog" role="dialog" aria-modal="true" aria-labelledby="nameDialogTitle">
+      <form class="name-panel" id="nameForm">
+        <h2 id="nameDialogTitle">留下探索者姓名</h2>
+        <p>这份考古报告将记录你的六组标本溯源成果。</p>
+        <input id="explorerName" name="explorerName" maxlength="8" autocomplete="off"
+          placeholder="请输入姓名（最多8字）" aria-label="探索者姓名" />
+        <button class="name-submit" type="submit">生成专属报告</button>
+      </form>
+    </div>
 
     <!-- 翻页过渡 -->
     <div id="flip"></div>
@@ -406,12 +487,12 @@ const RELICS = [
 
 /* ---------- 遗址总览 6 点位（含热区坐标%，建成后填 relic 索引） ---------- */
 const POINTS = [
-  { n:1, name:'河滩石器加工区',          relic:0,    x:3,  y:30, w:30, h:13 },
-  { n:2, name:'溶洞中心居址区',          relic:1,    x:25, y:42, w:50, h:24 },
-  { n:3, name:'黄门岩2号洞-早期贝类遗存区', relic:2,    x:58, y:51, w:34, h:13 },
-  { n:4, name:'黄门岩2号洞-植物采集活动区', relic:3,    x:2,  y:72, w:30, h:13 },
-  { n:5, name:'黄门岩1号洞第5文化层',      relic:4,    x:30, y:76, w:26, h:13 },
-  { n:6, name:'黄门岩1号洞M1墓葬',        relic:5,    x:58, y:80, w:34, h:13 }
+  { n:1, name:'河滩石器加工区',          relic:0,    x:7,  y:28, w:28, h:18 },
+  { n:2, name:'溶洞中心居址区',          relic:1,    x:34, y:40, w:28, h:18 },
+  { n:3, name:'黄门岩2号洞-早期贝类遗存区', relic:2,    x:65, y:46, w:27, h:17 },
+  { n:4, name:'黄门岩2号洞-植物采集活动区', relic:3,    x:9,  y:69, w:27, h:17 },
+  { n:5, name:'黄门岩1号洞第5文化层',      relic:4,    x:34, y:73, w:27, h:18 },
+  { n:6, name:'黄门岩1号洞M1墓葬',        relic:5,    x:65, y:80, w:27, h:18 }
 ];
 
 /* ---------- 遗址总览背景（下标 = 已点亮遗址数；加文物时补对应点亮图） ---------- */
@@ -430,7 +511,9 @@ const state = {
 const PAGES = {
   cover:'s-cover', role1:'s-role1', intro:'s-intro', cave:'s-cave', map:'s-map',
   puzzle:'s-puzzle', dig:'s-dig', role2:'s-role2', clean:'s-clean', archive:'s-archive',
-  quiz:'s-quiz', correct:'s-correct', wrong:'s-wrong', finish:'s-finish'
+  quiz:'s-quiz', correct:'s-correct', wrong:'s-wrong', finish:'s-finish',
+  'ending-intro':'s-ending-intro', 'ending-story':'s-ending-story',
+  'ending-summary':'s-ending-summary', report:'s-report'
 };
 const $ = id => document.getElementById(id);
 
@@ -518,6 +601,12 @@ function onEnter(page){
     btn.textContent=r.finishLabel||'下一步';
     btn.classList.add('show');
   }
+  if(page==='ending-story') startEndingStory();
+  if(page==='report'){
+    if(!completionDate) setCompletionDate();
+    showNameDialog();
+  }
+  if(page!=='ending-story') stopEndingStory();
 }
 
 /* ---------- 遗址总览：按状态切背景 + 注入点位热区 ---------- */
@@ -539,6 +628,13 @@ function renderMap(){
     }
     map.appendChild(el);
   });
+  if(state.unlockedCount>=POINTS.length){
+    const next=document.createElement('div');
+    next.className='hotspot pt map-ending-next';
+    next.style.cssText='left:18%;top:90%;width:64%;height:7%';
+    next.onclick=()=>{ SFX.click(); go('ending-intro'); };
+    map.appendChild(next);
+  }
 }
 
 /* ---------- 穿孔蚌器拼图：拖拽、错误回弹、正确吸附 ---------- */
@@ -645,6 +741,95 @@ function startPuzzle(){
     piece.addEventListener('pointerup',finishDrag);
     piece.addEventListener('pointercancel',finishDrag);
   });
+}
+
+/* ---------- P33 结尾文字逐字浮现 ---------- */
+const ENDING_LINES = [
+  '踏过岁月层叠的土层，',
+  '我们与岭南先民遥遥相逢。',
+  '',
+  '一件件遗存藏着远古的故事，',
+  '山海之间，是他们开拓、',
+  '栖居的印记。',
+  '',
+  '文明从未止步，',
+  '古老的根脉在这片土地绵延生长。',
+  '',
+  '愿我们继续探寻，',
+  '读懂岭南深藏的过往，',
+  '让千年文明的微光，',
+  '一直传递下去。'
+];
+let endingChars=[];
+let endingTimer=null;
+let endingComplete=false;
+
+function buildEndingCopy(){
+  const copy=$('endingCopy');
+  if(copy.childElementCount) return;
+  ENDING_LINES.forEach(text=>{
+    const line=document.createElement('div');
+    line.className=`ending-line${text?'':' is-gap'}`;
+    [...text].forEach(char=>{
+      const span=document.createElement('span');
+      span.className='char';
+      span.textContent=char;
+      line.appendChild(span);
+      endingChars.push(span);
+    });
+    copy.appendChild(line);
+  });
+}
+
+function stopEndingStory(){
+  if(endingTimer){ clearInterval(endingTimer); endingTimer=null; }
+}
+
+function revealEndingText(){
+  endingChars.forEach(char=>char.classList.add('shown'));
+  endingComplete=true;
+  stopEndingStory();
+  $('storyContinue').classList.add('show');
+}
+
+function startEndingStory(){
+  buildEndingCopy();
+  stopEndingStory();
+  endingComplete=false;
+  endingChars.forEach(char=>char.classList.remove('shown'));
+  $('storyContinue').classList.remove('show');
+  let index=0;
+  endingTimer=setInterval(()=>{
+    if(index>=endingChars.length){ revealEndingText(); return; }
+    endingChars[index++].classList.add('shown');
+  },55);
+}
+
+/* ---------- P35 报告姓名与完成日期 ---------- */
+let completionDate='';
+let reportDialogTimer=null;
+
+function todayText(){
+  const d=new Date();
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function setCompletionDate(){
+  completionDate=todayText();
+  $('reportDate').textContent=completionDate;
+}
+
+function showNameDialog(){
+  clearTimeout(reportDialogTimer);
+  reportDialogTimer=setTimeout(()=>{
+    if(state.page!=='report') return;
+    const dialog=$('nameDialog');
+    const input=$('explorerName');
+    const current=$('reportName').textContent.trim();
+    input.value=current&&current!=='青塘探源者'?current:'';
+    dialog.classList.add('show');
+    setTimeout(()=>input.focus({preventScroll:true}),120);
+  },330);
 }
 
 /* ---------- 通用提示 ---------- */
@@ -771,8 +956,33 @@ renderSound();
 
 // data-go 热区（封面/身份页等）
 document.querySelectorAll('[data-go]').forEach(el=>{
-  el.addEventListener('click',()=>{ SFX.click(); go(el.dataset.go); });
+  el.addEventListener('click',()=>{
+    SFX.click();
+    if(el.dataset.go==='report') setCompletionDate();
+    go(el.dataset.go);
+  });
 });
+// 结尾空景 → 逐字叙事
+$('endingIntroHit').addEventListener('click',()=>{ SFX.click(); go('ending-story'); });
+// 第一次点击立即显示全文，第二次点击进入结束页
+$('endingStoryHit').addEventListener('click',()=>{
+  if(!endingComplete){
+    revealEndingText();
+    SFX.reveal();
+  }else{
+    SFX.click();
+    go('ending-summary');
+  }
+});
+// 报告姓名输入
+$('nameForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=$('explorerName').value.trim().replace(/\s+/g,' ').slice(0,8);
+  $('reportName').textContent=name||'青塘探源者';
+  $('nameDialog').classList.remove('show');
+  SFX.reveal();
+});
+$('reportName').addEventListener('click',showNameDialog);
 // 视频页「跳过」→ 山洞页；山洞页「进入探方」热区由 data-go="map" 处理
 $('btn-skip').addEventListener('click',()=>{ SFX.click(); go('cave'); });
 // 挖掘完成 → 切换修复师身份
@@ -840,7 +1050,8 @@ function prefetchAssets(){
     'assets/r6-tile-1-3.jpg?v=10','assets/r6-tile-2-1.jpg?v=10',
     'assets/r6-tile-2-2.jpg?v=10','assets/r6-tile-2-3.jpg?v=10',
     'assets/r6-tile-3-1.jpg?v=10','assets/r6-tile-3-2.jpg?v=10',
-    'assets/r6-tile-3-3.jpg?v=10'];
+    'assets/r6-tile-3-3.jpg?v=10','assets/ending-p32-empty.jpg?v=11',
+    'assets/ending-p34-summary.jpg?v=11','assets/ending-p35-report.jpg?v=11'];
   let i=0;
   (function next(){
     if(i>=list.length) return;
